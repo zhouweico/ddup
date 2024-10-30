@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 func JWTAuth(userService service.IUserService) gin.HandlerFunc {
@@ -39,6 +40,26 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 		c.Set("userID", result.UserID)
 		c.Set("username", result.Username)
 		c.Set("userUUID", result.UUID)
+		c.Next()
+	}
+}
+
+func VerifyResourceOwnership() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userUUID := c.Param("uuid")
+		claims, exists := c.Get("claims")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+			c.Abort()
+			return
+		}
+
+		if userUUID != claims.(jwt.MapClaims)["uuid"].(string) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "无权访问此资源"})
+			c.Abort()
+			return
+		}
+
 		c.Next()
 	}
 }

@@ -39,11 +39,17 @@ func SetupRouter() *gin.Engine {
 		auth.Use(middleware.JWTAuth(userService))
 		{
 			auth.POST("/logout", userHandler.Logout)
+			auth.GET("/users", userHandler.GetUsers)
 			auth.PUT("/user", userHandler.UpdateUser)
 			auth.DELETE("/user", userHandler.DeleteUser)
-			auth.GET("/users", userHandler.GetUsers)               // 获取用户列表
-			auth.GET("/users/:uuid", userHandler.GetUser)          // 使用 uuid 参数
-			auth.PUT("/user/password", userHandler.ChangePassword) // 添加修改密码路由
+			auth.PUT("/user/password", userHandler.ChangePassword)
+
+			// 需要验证资源所有权的路由
+			protected := auth.Group("")
+			protected.Use(middleware.VerifyResourceOwnership())
+			{
+				protected.GET("/users/:uuid", userHandler.GetUser)
+			}
 		}
 	}
 

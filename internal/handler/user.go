@@ -195,18 +195,15 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Failure 403 {object} handler.Response "禁止访问"
 // @Router /users/{uuid} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-
-	// 获取请求的用户UUID
-	requestedUUID := c.Param("uuid")
-
-	user, err := h.userService.GetUserByUUID(c.Request.Context(), requestedUUID)
+	userUUID := c.GetString("userUUID")
+	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
 	if err != nil {
 		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
 		return
 	}
 
 	SendSuccess(c, "获取成功", UserDetailResponse{
-		UUID:      user.UUID, // 使用 UUID 替代 ID
+		UUID:      user.UUID,
 		Username:  user.Username,
 		Email:     user.Email,
 		Nickname:  user.Nickname,
@@ -235,9 +232,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetUint("userID")
-	updates := make(map[string]interface{})
+	userUUID := c.GetString("userUUID")
+	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	if err != nil {
+		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		return
+	}
 
+	updates := make(map[string]interface{})
 	if req.Nickname != "" {
 		updates["nickname"] = req.Nickname
 	}
@@ -254,7 +256,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		updates["avatar"] = req.Avatar
 	}
 
-	if err := h.userService.UpdateUser(c.Request.Context(), userID, updates); err != nil {
+	if err := h.userService.UpdateUser(c.Request.Context(), user.ID, updates); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -272,9 +274,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure 500 {object} handler.Response "系统错误"
 // @Router /user [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	userID := c.GetUint("userID")
+	userUUID := c.GetString("userUUID")
+	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	if err != nil {
+		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		return
+	}
 
-	if err := h.userService.DeleteUser(c.Request.Context(), userID); err != nil {
+	if err := h.userService.DeleteUser(c.Request.Context(), user.ID); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -299,8 +306,14 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetUint("userID")
-	err := h.userService.ChangePassword(c.Request.Context(), userID, req.OldPassword, req.NewPassword)
+	userUUID := c.GetString("userUUID")
+	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	if err != nil {
+		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		return
+	}
+
+	err = h.userService.ChangePassword(c.Request.Context(), user.ID, req.OldPassword, req.NewPassword)
 	if err != nil {
 		SendError(c, http.StatusBadRequest, err.Error())
 		return
