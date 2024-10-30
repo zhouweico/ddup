@@ -56,7 +56,10 @@ func (s *UserService) Register(ctx context.Context, username, password string) e
 		return errors.New("系统错误")
 	}
 
-	hashedPassword := utils.HashPassword(password)
+	hashedPassword, err := utils.HashPassword(password)
+	if err != nil {
+		return fmt.Errorf("密码加密失败: %w", err)
+	}
 	newUser := model.User{
 		Username: username,
 		Password: hashedPassword,

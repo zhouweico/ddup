@@ -1,16 +1,26 @@
 package utils
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"errors"
+	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 func ComparePasswords(hashedPassword string, plainPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
 }
 
-func HashPassword(password string) string {
+func HashPassword(password string) (string, error) {
+	if password == "" {
+		return "", errors.New("密码不能为空")
+	}
+
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		panic(err) // 在实际生产环境中应该更优雅地处理错误
+		return "", fmt.Errorf("生成密码哈希失败: %w", err)
 	}
-	return string(hashedBytes)
+
+	return string(hashedBytes), nil
 }
