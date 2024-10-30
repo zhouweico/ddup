@@ -27,21 +27,12 @@ const docTemplate = `{
                 "summary": "用户登录",
                 "parameters": [
                     {
-                        "description": "用户名",
-                        "name": "username",
+                        "description": "登录信息",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "密码",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handler.LoginRequest"
                         }
                     }
                 ],
@@ -49,25 +40,37 @@ const docTemplate = `{
                     "200": {
                         "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "无效的请求参数",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "用户名或密码错误",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
-        "/signup": {
+        "/sign-up": {
             "post": {
                 "description": "用户注册",
                 "consumes": [
@@ -79,21 +82,12 @@ const docTemplate = `{
                 "summary": "用户注册",
                 "parameters": [
                     {
-                        "description": "用户名",
-                        "name": "username",
+                        "description": "注册信息",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "密码",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handler.SignupRequest"
                         }
                     }
                 ],
@@ -101,13 +95,25 @@ const docTemplate = `{
                     "200": {
                         "description": "注册成功",
                         "schema": {
-                            "$ref": "#/definitions/handler.SignupResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SignupResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "无效的请求参数",
                         "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -115,15 +121,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.ErrorResponse": {
+        "handler.LoginRequest": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
-                "code": {
-                    "description": "错误码",
-                    "type": "integer"
+                "password": {
+                    "type": "string"
                 },
-                "message": {
-                    "description": "错误信息",
+                "username": {
                     "type": "string"
                 }
             }
@@ -146,6 +154,25 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.User"
                         }
                     ]
+                }
+            }
+        },
+        "handler.SignupRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 8
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
                 }
             }
         },
@@ -188,6 +215,22 @@ const docTemplate = `{
             "properties": {
                 "username": {
                     "description": "用户名",
+                    "type": "string"
+                }
+            }
+        },
+        "response.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "message": {
+                    "description": "响应信息",
                     "type": "string"
                 }
             }

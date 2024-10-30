@@ -16,6 +16,11 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// 添加全局中间件
+	r.Use(middleware.Logger())
+	r.Use(middleware.Cors())
+	r.Use(gin.Recovery())
+
 	// 初始化 services
 	userService := service.NewUserService(db.DB)
 
@@ -33,7 +38,8 @@ func SetupRouter() *gin.Engine {
 		auth := v1.Group("")
 		auth.Use(middleware.JWTAuth(userService))
 		{
-			// 添加需要认证的路由
+			// 用户相关路由
+
 		}
 	}
 

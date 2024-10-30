@@ -5,6 +5,7 @@ import (
 	"ddup-apis/internal/model"
 	"ddup-apis/internal/utils"
 	"errors"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -41,16 +42,19 @@ func NewUserService(db *gorm.DB) UserService {
 func (s *userService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
 	var user model.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
-		return nil, err
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("用户名或密码错误")
+		}
+		return nil, fmt.Errorf("系统错误: %w", err)
 	}
 
 	if !utils.ComparePasswords(user.Password, password) {
-		return nil, errors.New("密码错误")
+		return nil, errors.New("用户名或密码错误")
 	}
 
 	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("生成令牌失败: %w", err)
 	}
 
 	return &LoginResult{

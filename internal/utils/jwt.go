@@ -41,7 +41,7 @@ func GenerateToken(userID uint, username string) (token string, createdAt time.T
 			// 获取除最新 Token 外的所有 Token ID
 			var oldSessionIDs []int64
 			for i := 1; i < len(userSessions); i++ {
-				oldSessionIDs = append(oldSessionIDs, userSessions[i].ID)
+				oldSessionIDs = append(oldSessionIDs, int64(userSessions[i].ID))
 			}
 
 			// 将旧 Token 标记为无效
@@ -92,12 +92,10 @@ func GenerateToken(userID uint, username string) (token string, createdAt time.T
 
 	// 保存新 Token 到数据库
 	newUserSession := model.UserSession{
-		UserID:    int64(userID),
+		UserID:    userID,
 		Token:     token,
 		IsValid:   true,
 		ExpiredAt: expiredAt,
-		CreatedAt: createdAt,
-		UpdatedAt: createdAt,
 	}
 
 	if err = db.DB.Create(&newUserSession).Error; err != nil {
@@ -121,16 +119,4 @@ func ParseToken(tokenString string) (*Claims, error) {
 		return claims, nil
 	}
 	return nil, errors.New("invalid token")
-}
-
-// ShouldRefreshToken 检查是否需要刷新 Token
-func ShouldRefreshToken(claims *Claims) bool {
-	cfg := config.GetConfig()
-	expiresAt := claims.ExpiresAt
-	if expiresAt == nil {
-		return false
-	}
-
-	timeUntilExpiry := time.Until(expiresAt.Time)
-	return timeUntilExpiry < cfg.JWT.RefreshGracePeriod
 }

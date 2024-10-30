@@ -1,13 +1,18 @@
 package model
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type UserSession struct {
-	ID        int64     `db:"id"`
-	UserID    int64     `db:"user_id"`
-	Token     string    `db:"token"`
-	IsValid   bool      `db:"is_valid"`
-	ExpiredAt time.Time `db:"expired_at"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	gorm.Model
+	UserID    uint      `gorm:"not null;index"`
+	Token     string    `gorm:"type:varchar(255);not null;uniqueIndex"`
+	IsValid   bool      `gorm:"not null;default:true"`
+	ExpiredAt time.Time `gorm:"not null"`
+}
+
+func (UserSession) TableName() string {
+	return "user_sessions"
 }
