@@ -13,6 +13,12 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// SignupRequest 注册请求参数
+type SignupRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type UserHandler struct {
 	userService service.UserService
 }
@@ -23,7 +29,16 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 	}
 }
 
-// Login 处理用户登录
+// @Summary 用户登录
+// @Description 用户登录
+// @Accept json
+// @Produce json
+// @Param username body string true "用户名"
+// @Param password body string true "密码"
+// @Success 200 {object} LoginResponse "登录成功"
+// @Failure 400 {object} ErrorResponse "无效的请求参数"
+// @Failure 401 {object} ErrorResponse "用户名或密码错误"
+// @Router /login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -50,7 +65,15 @@ func (h *UserHandler) Login(c *gin.Context) {
 	})
 }
 
-// Signup 处理用户注册
+// @Summary 用户注册
+// @Description 用户注册
+// @Accept json
+// @Produce json
+// @Param username body string true "用户名"
+// @Param password body string true "密码"
+// @Success 200 {object} SignupResponse "注册成功"
+// @Failure 400 {object} ErrorResponse "无效的请求参数"
+// @Router /signup [post]
 func (h *UserHandler) Signup(c *gin.Context) {
 	var req SignupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -58,7 +81,7 @@ func (h *UserHandler) Signup(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Signup(c.Request.Context(), req.Username, req.Password, req.Email); err != nil {
+	if err := h.userService.Signup(c.Request.Context(), req.Username, req.Password); err != nil {
 		sendError(c, http.StatusBadRequest, err.Error())
 		return
 	}

@@ -15,27 +15,85 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/sign-up": {
+        "/login": {
             "post": {
-                "description": "用户注册接口",
+                "description": "用户登录",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "用户管理"
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "用户名",
+                        "name": "username",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "密码",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "无效的请求参数",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/signup": {
+            "post": {
+                "description": "用户注册",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "summary": "用户注册",
                 "parameters": [
                     {
-                        "description": "注册信息",
-                        "name": "data",
+                        "description": "用户名",
+                        "name": "username",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SignupRequest"
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "密码",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -43,25 +101,13 @@ const docTemplate = `{
                     "200": {
                         "description": "注册成功",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handler.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.SignupResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/handler.SignupResponse"
                         }
                     },
                     "400": {
-                        "description": "请求错误",
+                        "description": "无效的请求参数",
                         "schema": {
-                            "$ref": "#/definitions/handler.Response"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     }
                 }
@@ -69,38 +115,37 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.Response": {
+        "handler.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "响应码",
+                    "description": "错误码",
                     "type": "integer"
                 },
-                "data": {
-                    "description": "响应数据"
-                },
                 "message": {
-                    "description": "响应信息",
+                    "description": "错误信息",
                     "type": "string"
                 }
             }
         },
-        "handler.SignupRequest": {
+        "handler.LoginResponse": {
             "type": "object",
-            "required": [
-                "email",
-                "password",
-                "username"
-            ],
             "properties": {
-                "email": {
-                    "type": "string"
+                "tokenInfo": {
+                    "description": "Token信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/handler.TokenInfo"
+                        }
+                    ]
                 },
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
+                "userInfo": {
+                    "description": "用户信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/handler.User"
+                        }
+                    ]
                 }
             }
         },
@@ -114,6 +159,27 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.User"
                         }
                     ]
+                }
+            }
+        },
+        "handler.TokenInfo": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "expiredAt": {
+                    "description": "过期时间",
+                    "type": "string"
+                },
+                "expiresIn": {
+                    "description": "有效时长(秒)",
+                    "type": "integer"
+                },
+                "token": {
+                    "description": "JWT token",
+                    "type": "string"
                 }
             }
         },

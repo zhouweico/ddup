@@ -11,7 +11,7 @@ import (
 )
 
 type UserService interface {
-	Signup(ctx context.Context, username, password, email string) error
+	Signup(ctx context.Context, username, password string) error
 	Login(ctx context.Context, username, password string) (*LoginResult, error)
 	ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error)
 }
@@ -62,15 +62,12 @@ func (s *userService) Login(ctx context.Context, username, password string) (*Lo
 	}, nil
 }
 
-func (s *userService) Signup(ctx context.Context, username, password, email string) error {
+func (s *userService) Signup(ctx context.Context, username, password string) error {
 	var existingUser model.User
-	result := s.db.Where("username = ? OR email = ?", username, email).First(&existingUser)
+	result := s.db.Where("username = ?", username).First(&existingUser)
 
 	if result.Error == nil {
-		if existingUser.Username == username {
-			return errors.New("用户名已存在")
-		}
-		return errors.New("邮箱已被使用")
+		return errors.New("用户名已存在")
 	}
 
 	if result.Error != gorm.ErrRecordNotFound {
@@ -81,7 +78,6 @@ func (s *userService) Signup(ctx context.Context, username, password, email stri
 	newUser := model.User{
 		Username: username,
 		Password: hashedPassword,
-		Email:    email,
 	}
 
 	return s.db.Create(&newUser).Error

@@ -34,3 +34,9 @@ type SignupResponse struct {
 type User struct {
 	Username string `json:"username"` // 用户名
 }
+
+// ErrorResponse 错误响应结构
+type ErrorResponse struct {
+	Code    int    `json:"code"`    // 错误码
+	Message string `json:"message"` // 错误信息
+}
