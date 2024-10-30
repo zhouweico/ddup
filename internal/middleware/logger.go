@@ -49,6 +49,11 @@ func Logger(config ...LoggerConfig) gin.HandlerFunc {
 		end := time.Now()
 		latency := end.Sub(start)
 		clientIP := c.ClientIP()
+		if xff := c.GetHeader("X-Forwarded-For"); xff != "" {
+			clientIP = xff
+		} else if xrip := c.GetHeader("X-Real-IP"); xrip != "" {
+			clientIP = xrip
+		}
 		statusCode := c.Writer.Status()
 		bodySize := c.Writer.Size()
 		if bodySize < 0 {
