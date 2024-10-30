@@ -12,14 +12,13 @@ import (
 )
 
 type Claims struct {
-	UserID     uint   `json:"user_id"`
-	Username   string `json:"username"`
-	UserNanoID string `json:"userid"`
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken 生成 JWT Token 并保存到数据库
-func GenerateToken(userID uint, username string, userNanoID string) (token string, createdAt time.Time, expiresIn int64, expiredAt time.Time, err error) {
+func GenerateToken(id uint, userID string, username string) (token string, createdAt time.Time, expiresIn int64, expiredAt time.Time, err error) {
 	cfg := config.GetConfig()
 	now := time.Now()
 	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
@@ -28,7 +27,7 @@ func GenerateToken(userID uint, username string, userNanoID string) (token strin
 
 	// 查找该用户所有有效的 Token
 	var userSessions []model.UserSession
-	err = db.DB.Where("user_id = ? AND is_valid = ? AND expired_at > ?", userID, true, now).
+	err = db.DB.Where("user_id = ? AND is_valid = ? AND expired_at > ?", id, true, now).
 		Order("created_at DESC").
 		Find(&userSessions).Error
 	if err != nil {
@@ -67,7 +66,7 @@ func GenerateToken(userID uint, username string, userNanoID string) (token strin
 
 	// 将该用户所有旧 Token 标记为无效（包括已过期的）
 	if err = db.DB.Model(&model.UserSession{}).
-		Where("user_id = ?", userID).
+		Where("user_id = ?", id).
 		Update("is_valid", false).Error; err != nil {
 		return "", time.Time{}, 0, time.Time{}, err
 	}
@@ -77,9 +76,8 @@ func GenerateToken(userID uint, username string, userNanoID string) (token strin
 	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
 
 	claims := &Claims{
-		UserID:     userID,
-		Username:   username,
-		UserNanoID: userNanoID,
+		UserID:   id,
+		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiredAt),
 			IssuedAt:  jwt.NewNumericDate(createdAt),
@@ -94,7 +92,7 @@ func GenerateToken(userID uint, username string, userNanoID string) (token strin
 
 	// 保存新 Token 到数据库
 	newUserSession := model.UserSession{
-		UserID:    userID,
+		UserID:    id,
 		Token:     token,
 		IsValid:   true,
 		ExpiredAt: expiredAt,

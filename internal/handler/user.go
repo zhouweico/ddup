@@ -78,7 +78,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	uuid, err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
+	UserID, err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -87,7 +87,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	SendSuccess(c, "注册成功", RegisterResponse{
 		UserInfo: User{
 			Username: req.Username,
-			UUID:     uuid,
+			UserID:   UserID,
 		},
 	})
 }
@@ -123,6 +123,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		},
 		UserInfo: User{
 			Username: result.User.Username,
+			UserID:   result.User.UserID,
 		},
 	})
 }
@@ -193,11 +194,11 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param uuid path string true "用户UUID"
+// @Param userid path string true "用户ID"
 // @Success 200 {object} handler.Response{data=UserDetailResponse} "获取成功"
 // @Failure 401 {object} handler.Response "未授权"
 // @Failure 403 {object} handler.Response "禁止访问"
-// @Router /users/{uuid} [get]
+// @Router /users/{userid} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
 	userID := c.Param("userid")
 	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)

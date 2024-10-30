@@ -36,9 +36,9 @@ type LoginResult struct {
 
 type TokenValidationResult struct {
 	IsValid  bool
-	UserID   uint
+	ID       uint
 	Username string
-	UUID     string
+	UserID   string
 }
 
 type UserService struct {
@@ -145,9 +145,9 @@ func (s *UserService) ValidateToken(ctx context.Context, token string) (*TokenVa
 
 	return &TokenValidationResult{
 		IsValid:  true,
-		UserID:   user.ID,
+		ID:       user.ID,
 		Username: user.Username,
-		UUID:     user.UserID,
+		UserID:   user.UserID,
 	}, nil
 }
 

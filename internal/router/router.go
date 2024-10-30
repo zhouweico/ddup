@@ -46,9 +46,9 @@ func SetupRouter() *gin.Engine {
 
 			// 需要验证资源所有权的路由
 			protected := auth.Group("")
-			protected.Use(middleware.VerifyResourceOwnership())
+			protected.Use(middleware.VerifyResourceOwnership(userService))
 			{
-				protected.GET("/users/:uuid", userHandler.GetUser)
+				protected.GET("/users/:userid", userHandler.GetUser)
 			}
 		}
 	}

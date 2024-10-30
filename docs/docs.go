@@ -340,7 +340,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{uuid}": {
+        "/users/{userid}": {
             "get": {
                 "security": [
                     {
@@ -358,8 +358,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户UUID",
-                        "name": "uuid",
+                        "description": "用户ID",
+                        "name": "userid",
                         "in": "path",
                         "required": true
                     }
@@ -541,6 +541,14 @@ const docTemplate = `{
                     "description": "性别",
                     "type": "string"
                 },
+                "location": {
+                    "description": "位置",
+                    "type": "string"
+                },
+                "mobile": {
+                    "description": "手机号",
+                    "type": "string"
+                },
                 "nickname": {
                     "description": "用户昵称",
                     "type": "string"
@@ -550,12 +558,10 @@ const docTemplate = `{
         "handler.User": {
             "type": "object",
             "properties": {
-                "username": {
-                    "description": "用户名",
+                "userid": {
                     "type": "string"
                 },
-                "uuid": {
-                    "description": "用户UUID",
+                "username": {
                     "type": "string"
                 }
             }
@@ -581,14 +587,21 @@ const docTemplate = `{
                 "lastLogin": {
                     "type": "string"
                 },
+                "location": {
+                    "description": "位置",
+                    "type": "string"
+                },
+                "mobile": {
+                    "description": "手机号",
+                    "type": "string"
+                },
                 "nickname": {
                     "type": "string"
                 },
-                "username": {
+                "userid": {
                     "type": "string"
                 },
-                "uuid": {
-                    "description": "使用 UUID 替代 ID",
+                "username": {
                     "type": "string"
                 }
             }
