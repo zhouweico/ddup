@@ -340,7 +340,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{id}": {
+        "/users/{uuid}": {
             "get": {
                 "security": [
                     {
@@ -357,9 +357,9 @@ const docTemplate = `{
                 "summary": "获取用户详情",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "用户UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     }
@@ -553,6 +553,10 @@ const docTemplate = `{
                 "username": {
                     "description": "用户名",
                     "type": "string"
+                },
+                "uuid": {
+                    "description": "用户UUID",
+                    "type": "string"
                 }
             }
         },
@@ -574,9 +578,6 @@ const docTemplate = `{
                 "gender": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "lastLogin": {
                     "type": "string"
                 },
@@ -584,6 +585,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "description": "使用 UUID 替代 ID",
                     "type": "string"
                 }
             }
