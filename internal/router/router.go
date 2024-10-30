@@ -6,7 +6,7 @@ import (
 	"ddup-apis/internal/middleware"
 	"ddup-apis/internal/service"
 
-	_ "ddup-apis/docs" // 这行很重要，需要导入生成的 docs
+	_ "ddup-apis/docs"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -20,14 +20,14 @@ func SetupRouter() *gin.Engine {
 	userService := service.NewUserService(db.DB)
 
 	// 初始化 handlers
-	h := handler.NewHandler(userService)
+	userHandler := handler.NewUserHandler(userService)
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
 	{
 		// 公开路由
-		v1.POST("/sign-up", h.Signup)
-		v1.POST("/login", h.Login)
+		v1.POST("/sign-up", userHandler.Signup)
+		v1.POST("/login", userHandler.Login)
 
 		// 需要认证的路由
 		auth := v1.Group("")
