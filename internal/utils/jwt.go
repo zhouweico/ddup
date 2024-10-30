@@ -12,14 +12,14 @@ import (
 )
 
 type Claims struct {
-	UserID   uint   `json:"user_id"`
-	Username string `json:"username"`
-	UUID     string `json:"uuid"`
+	UserID     uint   `json:"user_id"`
+	Username   string `json:"username"`
+	UserNanoID string `json:"userid"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken 生成 JWT Token 并保存到数据库
-func GenerateToken(userID uint, username string, uuid string) (token string, createdAt time.Time, expiresIn int64, expiredAt time.Time, err error) {
+func GenerateToken(userID uint, username string, userNanoID string) (token string, createdAt time.Time, expiresIn int64, expiredAt time.Time, err error) {
 	cfg := config.GetConfig()
 	now := time.Now()
 	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
@@ -77,9 +77,9 @@ func GenerateToken(userID uint, username string, uuid string) (token string, cre
 	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
 
 	claims := &Claims{
-		UserID:   userID,
-		Username: username,
-		UUID:     uuid,
+		UserID:     userID,
+		Username:   username,
+		UserNanoID: userNanoID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiredAt),
 			IssuedAt:  jwt.NewNumericDate(createdAt),

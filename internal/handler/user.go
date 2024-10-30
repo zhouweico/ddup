@@ -25,6 +25,8 @@ type LoginRequest struct {
 type UpdateUserRequest struct {
 	Nickname string `json:"nickname,omitempty"` // 用户昵称
 	Email    string `json:"email,omitempty"`    // 邮箱
+	Mobile   string `json:"mobile,omitempty"`   // 手机号
+	Location string `json:"location,omitempty"` // 位置
 	Bio      string `json:"bio,omitempty"`      // 用户简介
 	Gender   string `json:"gender,omitempty"`   // 性别
 	Avatar   string `json:"avatar,omitempty"`   // 头像URL
@@ -38,9 +40,11 @@ type UserListResponse struct {
 
 // UserDetailResponse 用户详情响应
 type UserDetailResponse struct {
-	UUID      string     `json:"uuid"` // 使用 UUID 替代 ID
+	UserID    string     `json:"userid"`
 	Username  string     `json:"username"`
 	Email     string     `json:"email"`
+	Mobile    string     `json:"mobile"`   // 手机号
+	Location  string     `json:"location"` // 位置
 	Nickname  string     `json:"nickname"`
 	Bio       string     `json:"bio"`
 	Gender    string     `json:"gender"`
@@ -195,17 +199,19 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Failure 403 {object} handler.Response "禁止访问"
 // @Router /users/{uuid} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-	userUUID := c.GetString("userUUID")
-	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	userID := c.Param("userid")
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		SendError(c, http.StatusNotFound, err.Error())
 		return
 	}
 
 	SendSuccess(c, "获取成功", UserDetailResponse{
-		UUID:      user.UUID,
+		UserID:    user.UserID,
 		Username:  user.Username,
 		Email:     user.Email,
+		Mobile:    user.Mobile,
+		Location:  user.Location,
 		Nickname:  user.Nickname,
 		Bio:       user.Bio,
 		Gender:    user.Gender,
@@ -232,10 +238,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	userUUID := c.GetString("userUUID")
-	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	userID := c.Param("userid")
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		SendError(c, http.StatusNotFound, err.Error())
 		return
 	}
 
@@ -245,6 +251,12 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 	if req.Email != "" {
 		updates["email"] = req.Email
+	}
+	if req.Mobile != "" {
+		updates["mobile"] = req.Mobile
+	}
+	if req.Location != "" {
+		updates["location"] = req.Location
 	}
 	if req.Bio != "" {
 		updates["bio"] = req.Bio
@@ -274,10 +286,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure 500 {object} handler.Response "系统错误"
 // @Router /user [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	userUUID := c.GetString("userUUID")
-	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	userID := c.Param("userid")
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		SendError(c, http.StatusNotFound, err.Error())
 		return
 	}
 
@@ -306,10 +318,10 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	userUUID := c.GetString("userUUID")
-	user, err := h.userService.GetUserByUUID(c.Request.Context(), userUUID)
+	userID := c.Param("userid")
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
+		SendError(c, http.StatusNotFound, err.Error())
 		return
 	}
 

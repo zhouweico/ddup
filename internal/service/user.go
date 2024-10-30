@@ -6,8 +6,10 @@ import (
 	"ddup-apis/internal/utils"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +23,7 @@ type IUserService interface {
 	GetUsers(ctx context.Context, page, pageSize int) ([]model.User, int64, error)
 	GetUserByID(ctx context.Context, userID uint) (*model.User, error)
 	ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
-	GetUserByUUID(ctx context.Context, uuid string) (*model.User, error)
+	GetUserByUserID(ctx context.Context, userID string) (*model.User, error)
 }
 
 type LoginResult struct {
@@ -59,20 +61,36 @@ func (s *UserService) Register(ctx context.Context, username, password string) (
 		return "", errors.New("系统错误")
 	}
 
+	// 生成指定长度的 Nano ID (21位)
+	id, err := gonanoid.Generate("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 21)
+	if err != nil {
+		log.Printf("生成ID失败: %v", err)
+		return "", fmt.Errorf("生成ID失败: %w", err)
+	}
+	log.Printf("生成的UserID: %s, 长度: %d", id, len(id))
+
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
+		log.Printf("密码加密失败: %v", err)
 		return "", fmt.Errorf("密码加密失败: %w", err)
 	}
+
 	newUser := model.User{
 		Username: username,
 		Password: hashedPassword,
+		UserID:   id,
 	}
 
+	log.Printf("准备保存到数据库的UserID: %s", newUser.UserID)
+
 	if err := s.db.Create(&newUser).Error; err != nil {
+		log.Printf("创建用户失败: %v", err)
 		return "", fmt.Errorf("创建用户失败: %w", err)
 	}
 
-	return newUser.UUID, nil
+	log.Printf("保存后的UserID: %s", newUser.UserID)
+
+	return newUser.UserID, nil
 }
 
 func (s *UserService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
@@ -88,7 +106,7 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 		return nil, errors.New("密码错误")
 	}
 
-	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username, user.UUID)
+	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username, user.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("生成令牌失败: %w", err)
 	}
@@ -129,7 +147,7 @@ func (s *UserService) ValidateToken(ctx context.Context, token string) (*TokenVa
 		IsValid:  true,
 		UserID:   user.ID,
 		Username: user.Username,
-		UUID:     user.UUID,
+		UUID:     user.UserID,
 	}, nil
 }
 
@@ -211,9 +229,9 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uint, oldPasswo
 	return s.db.Model(&user).Update("password", hashedPassword).Error
 }
 
-func (s *UserService) GetUserByUUID(ctx context.Context, uuid string) (*model.User, error) {
+func (s *UserService) GetUserByUserID(ctx context.Context, userID string) (*model.User, error) {
 	var user model.User
-	if err := s.db.Where("uuid = ?", uuid).First(&user).Error; err != nil {
+	if err := s.db.Where("user_id = ?", userID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.New("用户不存在")
 		}

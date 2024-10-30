@@ -3,16 +3,17 @@ package model
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
-	UUID          string     `gorm:"type:char(36);uniqueIndex;not null" json:"uuid"`
-	Username      string     `gorm:"uniqueIndex;size:50;not null" json:"username"`
+	UserID        string     `gorm:"type:varchar(21);uniqueIndex;not null" json:"userid"`
+	Username      string     `gorm:"type:varchar(32);uniqueIndex;not null" json:"username"`
 	Password      string     `gorm:"size:100;not null" json:"-"` // json:"-" 确保密码不会被序列化
 	Email         string     `gorm:"size:100;null" json:"email"`
+	Mobile        string     `gorm:"size:20;null" json:"mobile"`              // 手机号
+	Location      string     `gorm:"size:100;null" json:"location"`           // 位置
 	Nickname      string     `gorm:"size:50" json:"nickname"`                 // 用户昵称
 	Bio           string     `gorm:"size:500" json:"bio"`                     // 用户简介
 	Gender        string     `gorm:"size:10;default:'unknown'" json:"gender"` // 性别: male/female/unknown
@@ -31,7 +32,6 @@ func (User) TableName() string {
 
 // BeforeCreate 创建前的钩子
 func (u *User) BeforeCreate(tx *gorm.DB) error {
-	u.UUID = uuid.New().String()
 	if u.Nickname == "" {
 		u.Nickname = u.Username
 	}
