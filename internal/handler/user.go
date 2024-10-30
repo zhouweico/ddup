@@ -50,10 +50,10 @@ type UserDetailResponse struct {
 }
 
 type UserHandler struct {
-	userService service.UserService
+	userService *service.UserService
 }
 
-func NewUserHandler(userService service.UserService) *UserHandler {
+func NewUserHandler(userService *service.UserService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}
@@ -129,7 +129,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Produce json
 // @Security Bearer
 // @Success 200 {object} handler.Response "退出成功"
-// @Failure 401 {object} handler.Response "未���权"
+// @Failure 401 {object} handler.Response "未授权"
 // @Router /logout [post]
 func (h *UserHandler) Logout(c *gin.Context) {
 	token := c.GetHeader("Authorization")

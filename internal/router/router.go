@@ -25,7 +25,7 @@ func SetupRouter() *gin.Engine {
 	userService := service.NewUserService(db.DB)
 
 	// 初始化 handlers
-	userHandler := handler.NewUserHandler(*userService)
+	userHandler := handler.NewUserHandler(userService)
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
