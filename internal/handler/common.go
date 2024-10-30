@@ -50,8 +50,8 @@ type (
 		UserInfo  User      `json:"userInfo"`  // 用户信息
 	}
 
-	// SignupResponse 注册响应数据
-	SignupResponse struct {
+	// RegisterResponse 注册响应数据
+	RegisterResponse struct {
 		UserInfo User `json:"userInfo"` // 用户信息
 	}
 

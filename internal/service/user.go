@@ -12,7 +12,7 @@ import (
 )
 
 type IUserService interface {
-	Signup(ctx context.Context, username, password string) error
+	Register(ctx context.Context, username, password string) error
 	Login(ctx context.Context, username, password string) (*LoginResult, error)
 	ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error)
 	Logout(ctx context.Context, token string) error
@@ -44,6 +44,27 @@ func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{db: db}
 }
 
+func (s *UserService) Register(ctx context.Context, username, password string) error {
+	var existingUser model.User
+	result := s.db.Where("username = ?", username).First(&existingUser)
+
+	if result.Error == nil {
+		return errors.New("用户名已存在")
+	}
+
+	if result.Error != gorm.ErrRecordNotFound {
+		return errors.New("系统错误")
+	}
+
+	hashedPassword := utils.HashPassword(password)
+	newUser := model.User{
+		Username: username,
+		Password: hashedPassword,
+	}
+
+	return s.db.Create(&newUser).Error
+}
+
 func (s *UserService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
 	var user model.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
@@ -73,27 +94,6 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 		ExpiredAt: expiredAt,
 		User:      &user,
 	}, nil
-}
-
-func (s *UserService) Signup(ctx context.Context, username, password string) error {
-	var existingUser model.User
-	result := s.db.Where("username = ?", username).First(&existingUser)
-
-	if result.Error == nil {
-		return errors.New("用户名已存在")
-	}
-
-	if result.Error != gorm.ErrRecordNotFound {
-		return errors.New("系统错误")
-	}
-
-	hashedPassword := utils.HashPassword(password)
-	newUser := model.User{
-		Username: username,
-		Password: hashedPassword,
-	}
-
-	return s.db.Create(&newUser).Error
 }
 
 func (s *UserService) ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error) {
@@ -129,27 +129,6 @@ func (s *UserService) Logout(ctx context.Context, token string) error {
 		Update("is_valid", false).Error
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, userID uint, updates map[string]interface{}) error {
-	delete(updates, "id")
-	delete(updates, "password")
-	delete(updates, "created_at")
-	delete(updates, "deleted_at")
-
-	result := s.db.Model(&model.User{}).Where("id = ?", userID).Updates(updates)
-	if result.RowsAffected == 0 {
-		return errors.New("用户不存在")
-	}
-	return result.Error
-}
-
-func (s *UserService) DeleteUser(ctx context.Context, userID uint) error {
-	result := s.db.Delete(&model.User{}, userID)
-	if result.RowsAffected == 0 {
-		return errors.New("用户不存在")
-	}
-	return result.Error
-}
-
 func (s *UserService) GetUsers(ctx context.Context, page, pageSize int) ([]model.User, int64, error) {
 	var users []model.User
 	var total int64
@@ -179,4 +158,25 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*model.User
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (s *UserService) UpdateUser(ctx context.Context, userID uint, updates map[string]interface{}) error {
+	delete(updates, "id")
+	delete(updates, "password")
+	delete(updates, "created_at")
+	delete(updates, "deleted_at")
+
+	result := s.db.Model(&model.User{}).Where("id = ?", userID).Updates(updates)
+	if result.RowsAffected == 0 {
+		return errors.New("用户不存在")
+	}
+	return result.Error
+}
+
+func (s *UserService) DeleteUser(ctx context.Context, userID uint) error {
+	result := s.db.Delete(&model.User{}, userID)
+	if result.RowsAffected == 0 {
+		return errors.New("用户不存在")
+	}
+	return result.Error
 }

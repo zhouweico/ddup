@@ -31,7 +31,7 @@ func SetupRouter() *gin.Engine {
 	v1 := r.Group("/api/v1")
 	{
 		// 公开路由
-		v1.POST("/register", userHandler.Signup)
+		v1.POST("/register", userHandler.Register)
 		v1.POST("/login", userHandler.Login)
 
 		// 需要认证的路由

@@ -101,7 +101,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sign-up": {
+        "/register": {
             "post": {
                 "description": "用户注册",
                 "consumes": [
@@ -118,7 +118,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SignupRequest"
+                            "$ref": "#/definitions/handler.RegisterRequest"
                         }
                     }
                 ],
@@ -134,7 +134,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.SignupResponse"
+                                            "$ref": "#/definitions/handler.RegisterResponse"
                                         }
                                     }
                                 }
@@ -388,23 +388,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.Response": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应码",
-                    "type": "integer"
-                },
-                "data": {
-                    "description": "响应数据"
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string"
-                }
-            }
-        },
-        "handler.SignupRequest": {
+        "handler.RegisterRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -423,7 +407,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.SignupResponse": {
+        "handler.RegisterResponse": {
             "type": "object",
             "properties": {
                 "userInfo": {
@@ -433,6 +417,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.User"
                         }
                     ]
+                }
+            }
+        },
+        "handler.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string"
                 }
             }
         },

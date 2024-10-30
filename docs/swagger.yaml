@@ -21,18 +21,7 @@ definitions:
         - $ref: '#/definitions/handler.User'
         description: 用户信息
     type: object
-  handler.Response:
-    properties:
-      code:
-        description: 响应码
-        type: integer
-      data:
-        description: 响应数据
-      message:
-        description: 响应信息
-        type: string
-    type: object
-  handler.SignupRequest:
+  handler.RegisterRequest:
     properties:
       password:
         maxLength: 50
@@ -46,12 +35,23 @@ definitions:
     - password
     - username
     type: object
-  handler.SignupResponse:
+  handler.RegisterResponse:
     properties:
       userInfo:
         allOf:
         - $ref: '#/definitions/handler.User'
         description: 用户信息
+    type: object
+  handler.Response:
+    properties:
+      code:
+        description: 响应码
+        type: integer
+      data:
+        description: 响应数据
+      message:
+        description: 响应信息
+        type: string
     type: object
   handler.TokenInfo:
     properties:
@@ -189,7 +189,7 @@ paths:
       security:
       - Bearer: []
       summary: 用户退出
-  /sign-up:
+  /register:
     post:
       consumes:
       - application/json
@@ -200,7 +200,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.SignupRequest'
+          $ref: '#/definitions/handler.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -211,7 +211,7 @@ paths:
             - $ref: '#/definitions/handler.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.SignupResponse'
+                  $ref: '#/definitions/handler.RegisterResponse'
               type: object
         "400":
           description: 无效的请求参数

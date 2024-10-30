@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SignupRequest 注册请求参数
-type SignupRequest struct {
+// RegisterRequest 注册请求参数
+type RegisterRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=50,alphanum"`
 	Password string `json:"password" binding:"required,min=8,max=50"`
 }
@@ -62,23 +62,23 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 // @Description 用户注册
 // @Accept json
 // @Produce json
-// @Param request body SignupRequest true "注册信息"
-// @Success 200 {object} handler.Response{data=handler.SignupResponse} "注册成功"
+// @Param request body RegisterRequest true "注册信息"
+// @Success 200 {object} handler.Response{data=handler.RegisterResponse} "注册成功"
 // @Failure 400 {object} handler.Response "无效的请求参数"
-// @Router /sign-up [post]
-func (h *UserHandler) Signup(c *gin.Context) {
-	var req SignupRequest
+// @Router /register [post]
+func (h *UserHandler) Register(c *gin.Context) {
+	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		SendError(c, http.StatusBadRequest, "无效的请求参数")
 		return
 	}
 
-	if err := h.userService.Signup(c.Request.Context(), req.Username, req.Password); err != nil {
+	if err := h.userService.Register(c.Request.Context(), req.Username, req.Password); err != nil {
 		SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	SendSuccess(c, "注册成功", SignupResponse{
+	SendSuccess(c, "注册成功", RegisterResponse{
 		UserInfo: User{
 			Username: req.Username,
 		},
@@ -135,70 +135,6 @@ func (h *UserHandler) Logout(c *gin.Context) {
 		return
 	}
 	SendSuccess(c, "退出成功", nil)
-}
-
-// @Summary 更新用户信息
-// @Description 更新用户基本信息
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param request body UpdateUserRequest true "用户信息"
-// @Success 200 {object} handler.Response "更新成功"
-// @Failure 400 {object} handler.Response "无效的请求参数"
-// @Failure 401 {object} handler.Response "未授权"
-// @Router /user [put]
-func (h *UserHandler) UpdateUser(c *gin.Context) {
-	var req UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		SendError(c, http.StatusBadRequest, "无效的请求参数")
-		return
-	}
-
-	userID := c.GetUint("userID")
-	updates := make(map[string]interface{})
-
-	if req.Nickname != "" {
-		updates["nickname"] = req.Nickname
-	}
-	if req.Email != "" {
-		updates["email"] = req.Email
-	}
-	if req.Bio != "" {
-		updates["bio"] = req.Bio
-	}
-	if req.Gender != "" {
-		updates["gender"] = req.Gender
-	}
-	if req.Avatar != "" {
-		updates["avatar"] = req.Avatar
-	}
-
-	if err := h.userService.UpdateUser(c.Request.Context(), userID, updates); err != nil {
-		SendError(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	SendSuccess(c, "更新成功", nil)
-}
-
-// @Summary 删除用户
-// @Description 软除用户账号
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Success 200 {object} handler.Response "删除成功"
-// @Failure 401 {object} handler.Response "未授权"
-// @Failure 500 {object} handler.Response "系统错误"
-// @Router /user [delete]
-func (h *UserHandler) DeleteUser(c *gin.Context) {
-	userID := c.GetUint("userID")
-
-	if err := h.userService.DeleteUser(c.Request.Context(), userID); err != nil {
-		SendError(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	SendSuccess(c, "删除成功", nil)
 }
 
 // @Summary 获取用户列表
@@ -282,4 +218,68 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		Avatar:    user.Avatar,
 		CreatedAt: user.CreatedAt,
 	})
+}
+
+// @Summary 更新用户信息
+// @Description 更新用户基本信息
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body UpdateUserRequest true "用户信息"
+// @Success 200 {object} handler.Response "更新成功"
+// @Failure 400 {object} handler.Response "无效的请求参数"
+// @Failure 401 {object} handler.Response "未授权"
+// @Router /user [put]
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	var req UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		SendError(c, http.StatusBadRequest, "无效的请求参数")
+		return
+	}
+
+	userID := c.GetUint("userID")
+	updates := make(map[string]interface{})
+
+	if req.Nickname != "" {
+		updates["nickname"] = req.Nickname
+	}
+	if req.Email != "" {
+		updates["email"] = req.Email
+	}
+	if req.Bio != "" {
+		updates["bio"] = req.Bio
+	}
+	if req.Gender != "" {
+		updates["gender"] = req.Gender
+	}
+	if req.Avatar != "" {
+		updates["avatar"] = req.Avatar
+	}
+
+	if err := h.userService.UpdateUser(c.Request.Context(), userID, updates); err != nil {
+		SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	SendSuccess(c, "更新成功", nil)
+}
+
+// @Summary 删除用户
+// @Description 软除用户账号
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} handler.Response "删除成功"
+// @Failure 401 {object} handler.Response "未授权"
+// @Failure 500 {object} handler.Response "系统错误"
+// @Router /user [delete]
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	userID := c.GetUint("userID")
+
+	if err := h.userService.DeleteUser(c.Request.Context(), userID); err != nil {
+		SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	SendSuccess(c, "删除成功", nil)
 }
