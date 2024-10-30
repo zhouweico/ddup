@@ -106,7 +106,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	result, err := h.userService.Login(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
-		SendError(c, http.StatusUnauthorized, "用户名或密码错误")
+		SendError(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 

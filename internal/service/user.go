@@ -79,13 +79,13 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 	var user model.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New("用户名或密码错误")
+			return nil, errors.New("用户不存在")
 		}
-		return nil, fmt.Errorf("系统错误: %w", err)
+		return nil, err
 	}
 
 	if !utils.ComparePasswords(user.Password, password) {
-		return nil, errors.New("用户名或密码错误")
+		return nil, errors.New("密码错误")
 	}
 
 	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username, user.UUID)
@@ -93,28 +93,14 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 		return nil, fmt.Errorf("生成令牌失败: %w", err)
 	}
 
-	if err := s.db.Model(&user).Update("last_login", time.Now()).Error; err != nil {
-		return nil, fmt.Errorf("更新登录时间失败: %w", err)
-	}
-
-	// 生成token后，保存会话信息
-	session := model.UserSession{
-		UserID:    user.ID,
-		Token:     token,
-		IsValid:   true,
-		ExpiredAt: expiredAt,
-	}
-
-	if err := s.db.Create(&session).Error; err != nil {
-		return nil, fmt.Errorf("保存会话信息失败: %w", err)
-	}
+	s.db.Model(&user).Update("last_login", time.Now())
 
 	return &LoginResult{
 		Token:     token,
+		User:      &user,
 		CreatedAt: createdAt,
 		ExpiresIn: expiresIn,
 		ExpiredAt: expiredAt,
-		User:      &user,
 	}, nil
 }
 
@@ -134,7 +120,6 @@ func (s *UserService) ValidateToken(ctx context.Context, token string) (*TokenVa
 		return &TokenValidationResult{IsValid: false}, nil
 	}
 
-	// 获取用户信息
 	var user model.User
 	if err := s.db.First(&user, session.UserID).Error; err != nil {
 		return nil, fmt.Errorf("获取用户信息失败: %w", err)
@@ -158,13 +143,11 @@ func (s *UserService) GetUsers(ctx context.Context, page, pageSize int) ([]model
 	var users []model.User
 	var total int64
 
-	// 计算总数
 	result := s.db.Model(&model.User{}).Count(&total)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
 
-	// 分页查询
 	offset := (page - 1) * pageSize
 	result = s.db.Offset(offset).Limit(pageSize).Find(&users)
 	if result.Error != nil {
@@ -212,23 +195,19 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uint, oldPasswo
 		return errors.New("用户不存在")
 	}
 
-	// 验证旧密码
 	if !utils.ComparePasswords(user.Password, oldPassword) {
 		return errors.New("原密码错误")
 	}
 
-	// 检查新密码是否与旧密码相同
 	if oldPassword == newPassword {
 		return errors.New("新密码不能与原密码相同")
 	}
 
-	// 生成新密码哈希
 	hashedPassword, err := utils.HashPassword(newPassword)
 	if err != nil {
 		return fmt.Errorf("密码加密失败: %w", err)
 	}
 
-	// 更新密码
 	return s.db.Model(&user).Update("password", hashedPassword).Error
 }
 
