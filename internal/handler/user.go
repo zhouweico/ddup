@@ -38,14 +38,15 @@ type UserListResponse struct {
 
 // UserDetailResponse 用户详情响应
 type UserDetailResponse struct {
-	ID        uint      `json:"id"`        // 用户ID
-	Username  string    `json:"username"`  // 用户名
-	Email     string    `json:"email"`     // 邮箱
-	Nickname  string    `json:"nickname"`  // 昵称
-	Bio       string    `json:"bio"`       // 简介
-	Gender    string    `json:"gender"`    // 性别
-	Avatar    string    `json:"avatar"`    // 头像
-	CreatedAt time.Time `json:"createdAt"` // 创建时间
+	UUID      string     `json:"uuid"` // 使用 UUID 替代 ID
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Nickname  string     `json:"nickname"`
+	Bio       string     `json:"bio"`
+	Gender    string     `json:"gender"`
+	Birthday  *time.Time `json:"birthday"`
+	Avatar    string     `json:"avatar"`
+	LastLogin *time.Time `json:"lastLogin"`
 }
 
 type UserHandler struct {
@@ -73,7 +74,8 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Register(c.Request.Context(), req.Username, req.Password); err != nil {
+	uuid, err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
+	if err != nil {
 		SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -81,6 +83,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	SendSuccess(c, "注册成功", RegisterResponse{
 		UserInfo: User{
 			Username: req.Username,
+			UUID:     uuid,
 		},
 	})
 }
@@ -126,7 +129,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Produce json
 // @Security Bearer
 // @Success 200 {object} handler.Response "退出成功"
-// @Failure 401 {object} handler.Response "未授权"
+// @Failure 401 {object} handler.Response "未���权"
 // @Router /logout [post]
 func (h *UserHandler) Logout(c *gin.Context) {
 	token := c.GetHeader("Authorization")
@@ -182,41 +185,36 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 }
 
 // @Summary 获取用户详情
-// @Description 获取指定用户的详细信息
+// @Description 获取用户详细信息（仅允许获取自己的信息）
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param id path int true "用户ID"
+// @Param uuid path string true "用户UUID"
 // @Success 200 {object} handler.Response{data=UserDetailResponse} "获取成功"
 // @Failure 401 {object} handler.Response "未授权"
-// @Failure 404 {object} handler.Response "用户不存在"
-// @Router /users/{id} [get]
+// @Failure 403 {object} handler.Response "禁止访问"
+// @Router /users/{uuid} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-	userID := utils.StringToUint(c.Param("id"))
-	if userID == 0 {
-		SendError(c, http.StatusBadRequest, "无效的用户ID")
-		return
-	}
 
-	user, err := h.userService.GetUserByID(c.Request.Context(), userID)
+	// 获取请求的用户UUID
+	requestedUUID := c.Param("uuid")
+
+	user, err := h.userService.GetUserByUUID(c.Request.Context(), requestedUUID)
 	if err != nil {
-		if err.Error() == "用户不存在" {
-			SendError(c, http.StatusNotFound, err.Error())
-			return
-		}
 		SendError(c, http.StatusInternalServerError, "获取用户信息失败")
 		return
 	}
 
 	SendSuccess(c, "获取成功", UserDetailResponse{
-		ID:        user.ID,
+		UUID:      user.UUID, // 使用 UUID 替代 ID
 		Username:  user.Username,
 		Email:     user.Email,
 		Nickname:  user.Nickname,
 		Bio:       user.Bio,
 		Gender:    user.Gender,
+		Birthday:  user.Birthday,
 		Avatar:    user.Avatar,
-		CreatedAt: user.CreatedAt,
+		LastLogin: user.LastLogin,
 	})
 }
 
@@ -282,4 +280,36 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	SendSuccess(c, "删除成功", nil)
+}
+
+// @Summary 修改密码
+// @Description 用户修改密码
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body ChangePasswordRequest true "修改密码请求"
+// @Success 200 {object} handler.Response "密码修改成功"
+// @Failure 400 {object} handler.Response "请求参数错误"
+// @Failure 401 {object} handler.Response "未授权"
+// @Router /user/password [put]
+func (h *UserHandler) ChangePassword(c *gin.Context) {
+	var req ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		SendError(c, http.StatusBadRequest, "无效的请求参数")
+		return
+	}
+
+	userID := c.GetUint("userID")
+	err := h.userService.ChangePassword(c.Request.Context(), userID, req.OldPassword, req.NewPassword)
+	if err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	SendSuccess(c, "密码修改成功", nil)
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"oldPassword" binding:"required,min=6"`
+	NewPassword string `json:"newPassword" binding:"required,min=6"`
 }

@@ -36,13 +36,14 @@ func SetupRouter() *gin.Engine {
 
 		// 需要认证的路由
 		auth := v1.Group("")
-		auth.Use(middleware.JWTAuth(*userService))
+		auth.Use(middleware.JWTAuth(userService))
 		{
 			auth.POST("/logout", userHandler.Logout)
 			auth.PUT("/user", userHandler.UpdateUser)
 			auth.DELETE("/user", userHandler.DeleteUser)
-			auth.GET("/users", userHandler.GetUsers)    // 获取用户列表
-			auth.GET("/users/:id", userHandler.GetUser) // 获取用户详情
+			auth.GET("/users", userHandler.GetUsers)               // 获取用户列表
+			auth.GET("/users/:uuid", userHandler.GetUser)          // 使用 uuid 参数
+			auth.PUT("/user/password", userHandler.ChangePassword) // 添加修改密码路由
 		}
 	}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func JWTAuth(userService service.UserService) gin.HandlerFunc {
+func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
@@ -29,8 +29,16 @@ func JWTAuth(userService service.UserService) gin.HandlerFunc {
 			return
 		}
 
+		requestUUID := c.Param("uuid")
+		if requestUUID != "" && requestUUID != result.UUID {
+			sendError(c, http.StatusForbidden, "无权访问该资源")
+			c.Abort()
+			return
+		}
+
 		c.Set("userID", result.UserID)
 		c.Set("username", result.Username)
+		c.Set("userUUID", result.UUID)
 		c.Next()
 	}
 }

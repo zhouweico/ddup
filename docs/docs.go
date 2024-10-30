@@ -233,6 +233,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/password": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "用户修改密码",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "修改密码",
+                "parameters": [
+                    {
+                        "description": "修改密码请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "密码修改成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -299,7 +347,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "获取指定用户的详细信息",
+                "description": "获取用户详细信息（仅允许获取自己的信息）",
                 "consumes": [
                     "application/json"
                 ],
@@ -341,8 +389,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.Response"
                         }
                     },
-                    "404": {
-                        "description": "用户不存在",
+                    "403": {
+                        "description": "禁止访问",
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
@@ -352,6 +400,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "newPassword",
+                "oldPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "oldPassword": {
+                    "type": "string",
+                    "minLength": 6
+                }
+            }
+        },
         "handler.LoginRequest": {
             "type": "object",
             "required": [
@@ -495,35 +560,30 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar": {
-                    "description": "头像",
                     "type": "string"
                 },
                 "bio": {
-                    "description": "简介",
                     "type": "string"
                 },
-                "createdAt": {
-                    "description": "创建时间",
+                "birthday": {
                     "type": "string"
                 },
                 "email": {
-                    "description": "邮箱",
                     "type": "string"
                 },
                 "gender": {
-                    "description": "性别",
                     "type": "string"
                 },
                 "id": {
-                    "description": "用户ID",
                     "type": "integer"
                 },
+                "lastLogin": {
+                    "type": "string"
+                },
                 "nickname": {
-                    "description": "昵称",
                     "type": "string"
                 },
                 "username": {
-                    "description": "用户名",
                     "type": "string"
                 }
             }

@@ -40,6 +40,7 @@ type TokenInfo struct {
 // User 用户信息
 type User struct {
 	Username string `json:"username"` // 用户名
+	UUID     string `json:"uuid"`     // 用户UUID
 }
 
 // API 响应数据结构
