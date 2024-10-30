@@ -194,14 +194,18 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param userid path string true "用户ID"
 // @Success 200 {object} handler.Response{data=UserDetailResponse} "获取成功"
 // @Failure 401 {object} handler.Response "未授权"
 // @Failure 403 {object} handler.Response "禁止访问"
-// @Router /users/{userid} [get]
+// @Router /user [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-	userID := c.Param("userid")
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
+	userID, exists := c.Get("userID")
+	if !exists {
+		SendError(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return
@@ -239,8 +243,13 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	userID := c.Param("userid")
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
+	userID, exists := c.Get("userID")
+	if !exists {
+		SendError(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return
@@ -287,8 +296,13 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure 500 {object} handler.Response "系统错误"
 // @Router /user [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	userID := c.Param("userid")
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
+	userID, exists := c.Get("userID")
+	if !exists {
+		SendError(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return
@@ -319,8 +333,13 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	userID := c.Param("userid")
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID)
+	userID, exists := c.Get("userID")
+	if !exists {
+		SendError(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+
+	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return

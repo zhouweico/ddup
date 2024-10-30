@@ -40,16 +40,10 @@ func SetupRouter() *gin.Engine {
 		{
 			auth.POST("/logout", userHandler.Logout)
 			auth.GET("/users", userHandler.GetUsers)
+			auth.GET("/user", userHandler.GetUser)
 			auth.PUT("/user", userHandler.UpdateUser)
 			auth.DELETE("/user", userHandler.DeleteUser)
 			auth.PUT("/user/password", userHandler.ChangePassword)
-
-			// 需要验证资源所有权的路由
-			protected := auth.Group("")
-			protected.Use(middleware.VerifyResourceOwnership(userService))
-			{
-				protected.GET("/users/:userid", userHandler.GetUser)
-			}
 		}
 	}
 

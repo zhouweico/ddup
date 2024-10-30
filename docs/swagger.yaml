@@ -260,6 +260,33 @@ paths:
       security:
       - Bearer: []
       summary: 删除用户
+    get:
+      consumes:
+      - application/json
+      description: 获取用户详细信息（仅允许获取自己的信息）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserDetailResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "403":
+          description: 禁止访问
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 获取用户详情
     put:
       consumes:
       - application/json
@@ -354,38 +381,4 @@ paths:
       security:
       - Bearer: []
       summary: 获取用户列表
-  /users/{userid}:
-    get:
-      consumes:
-      - application/json
-      description: 获取用户详细信息（仅允许获取自己的信息）
-      parameters:
-      - description: 用户ID
-        in: path
-        name: userid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.UserDetailResponse'
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "403":
-          description: 禁止访问
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 获取用户详情
 swagger: "2.0"

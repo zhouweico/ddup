@@ -42,32 +42,6 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 	}
 }
 
-func VerifyResourceOwnership(userService service.IUserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		requestUserID := c.Param("userid")
-		token := extractToken(c)
-		if token == "" {
-			sendError(c, http.StatusUnauthorized, "未提供认证信息")
-			c.Abort()
-			return
-		}
-
-		result, err := userService.ValidateToken(c.Request.Context(), token)
-		if err != nil {
-			sendError(c, http.StatusUnauthorized, "Token 验证失败")
-			c.Abort()
-			return
-		}
-		if !result.IsValid || requestUserID != result.UserID {
-			sendError(c, http.StatusForbidden, "无权访问此资源")
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
 func sendError(c *gin.Context, status int, message string) {
 	c.JSON(status, gin.H{
 		"code":    status,

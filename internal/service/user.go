@@ -186,13 +186,13 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*model.User
 	return &user, nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, userID uint, updates map[string]interface{}) error {
+func (s *UserService) UpdateUser(ctx context.Context, id uint, updates map[string]interface{}) error {
 	delete(updates, "id")
 	delete(updates, "password")
 	delete(updates, "created_at")
 	delete(updates, "deleted_at")
 
-	result := s.db.Model(&model.User{}).Where("id = ?", userID).Updates(updates)
+	result := s.db.Model(&model.User{}).Where("id = ?", id).Updates(updates)
 	if result.RowsAffected == 0 {
 		return errors.New("用户不存在")
 	}
