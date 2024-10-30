@@ -1,7 +1,10 @@
 package router
 
 import (
+	"ddup-apis/internal/db"
 	"ddup-apis/internal/handler"
+	"ddup-apis/internal/middleware"
+	"ddup-apis/internal/service"
 
 	_ "ddup-apis/docs" // 这行很重要，需要导入生成的 docs
 
@@ -13,13 +16,25 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// 初始化 services
+	userService := service.NewUserService(db.DB)
+
+	// 初始化 handlers
+	h := handler.NewHandler(userService)
+
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
 	{
-		// 认证相关路由
-		v1.POST("/sign-up", handler.Signup) // 注册
-		v1.POST("/login", handler.Login)    // 登录
-		// ... 其他路由
+		// 公开路由
+		v1.POST("/sign-up", h.Signup)
+		v1.POST("/login", h.Login)
+
+		// 需要认证的路由
+		auth := v1.Group("")
+		auth.Use(middleware.JWTAuth(userService))
+		{
+			// 添加需要认证的路由
+		}
 	}
 
 	// Swagger 文档路由

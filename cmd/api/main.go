@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf("初始化数据库失败: %v", err)
 	}
 
-	// 初始化 Gin 和路由
+	// 初始化路由
 	r := router.SetupRouter()
 
 	// 启动服务器

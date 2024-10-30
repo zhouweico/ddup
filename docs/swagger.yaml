@@ -1,26 +1,5 @@
 basePath: /api/v1
 definitions:
-  handler.LoginRequest:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  handler.LoginResponse:
-    properties:
-      tokenInfo:
-        allOf:
-        - $ref: '#/definitions/handler.TokenInfo'
-        description: Token信息
-      userInfo:
-        allOf:
-        - $ref: '#/definitions/handler.User'
-        description: 用户信息
-    type: object
   handler.Response:
     properties:
       code:
@@ -34,45 +13,26 @@ definitions:
     type: object
   handler.SignupRequest:
     properties:
+      email:
+        type: string
       password:
         type: string
       username:
         type: string
     required:
+    - email
     - password
     - username
     type: object
   handler.SignupResponse:
     properties:
-      tokenInfo:
-        allOf:
-        - $ref: '#/definitions/handler.TokenInfo'
-        description: Token信息
       userInfo:
         allOf:
         - $ref: '#/definitions/handler.User'
         description: 用户信息
     type: object
-  handler.TokenInfo:
-    properties:
-      createdAt:
-        description: 创建时间
-        type: string
-      expiredAt:
-        description: 过期时间
-        type: string
-      expiresIn:
-        description: 有效时长(秒)
-        type: integer
-      token:
-        description: JWT token
-        type: string
-    type: object
   handler.User:
     properties:
-      id:
-        description: 用户ID
-        type: integer
       username:
         description: 用户名
         type: string
@@ -84,41 +44,6 @@ info:
   title: DDUP API
   version: "1.0"
 paths:
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: 用户登录接口
-      parameters:
-      - description: 登录信息
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/handler.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 登录成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.LoginResponse'
-              type: object
-        "400":
-          description: 请求错误
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-      summary: 用户登录
-      tags:
-      - 用户管理
   /sign-up:
     post:
       consumes:

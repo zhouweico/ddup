@@ -21,6 +21,9 @@ type Claims struct {
 func GenerateToken(userID uint, username string) (token string, createdAt time.Time, expiresIn int64, expiredAt time.Time, err error) {
 	cfg := config.GetConfig()
 	now := time.Now()
+	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
+	expiredAt = now.Add(cfg.JWT.ExpiresIn)
+	createdAt = now
 
 	// 查找该用户所有有效的 Token
 	var userSessions []model.UserSession
@@ -69,7 +72,6 @@ func GenerateToken(userID uint, username string) (token string, createdAt time.T
 	}
 
 	// 生成新的 Token
-	createdAt = now
 	expiredAt = createdAt.Add(cfg.JWT.ExpiresIn)
 	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
 

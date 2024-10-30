@@ -2,52 +2,114 @@ package service
 
 import (
 	"context"
-	"time"
-
 	"ddup-apis/internal/model"
+	"ddup-apis/internal/utils"
+	"errors"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type UserService interface {
 	Signup(ctx context.Context, username, password, email string) error
-	Login(ctx context.Context, username, password string) (string, error)
-	ValidateToken(ctx context.Context, token string) (bool, error)
+	Login(ctx context.Context, username, password string) (*LoginResult, error)
+	ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error)
+}
+
+type LoginResult struct {
+	Token     string
+	CreatedAt time.Time
+	ExpiresIn int64
+	ExpiredAt time.Time
+	User      *model.User
+}
+
+type TokenValidationResult struct {
+	IsValid  bool
+	UserID   uint
+	Username string
 }
 
 type userService struct {
-	db        *gorm.DB
-	jwtSecret string
+	db *gorm.DB
 }
 
-// 验证 token
-func (s *userService) ValidateToken(ctx context.Context, token string) (bool, error) {
-	var session model.UserSession
-	if err := s.db.Where("token = ?", token).First(&session).Error; err != nil {
-		return false, err
+func NewUserService(db *gorm.DB) UserService {
+	return &userService{db: db}
+}
+
+func (s *userService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
+	var user model.User
+	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
+		return nil, err
 	}
 
-	// 检查 token 是否有效
-	if !session.IsValid || time.Now().After(session.ExpiredAt) {
-		// 标记 token 为失效
-		if err := s.db.Model(&model.UserSession{}).Where("token = ?", token).Update("is_valid", false).Error; err != nil {
-			return false, err
+	if !utils.ComparePasswords(user.Password, password) {
+		return nil, errors.New("密码错误")
+	}
+
+	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResult{
+		Token:     token,
+		CreatedAt: createdAt,
+		ExpiresIn: expiresIn,
+		ExpiredAt: expiredAt,
+		User:      &user,
+	}, nil
+}
+
+func (s *userService) Signup(ctx context.Context, username, password, email string) error {
+	var existingUser model.User
+	result := s.db.Where("username = ? OR email = ?", username, email).First(&existingUser)
+
+	if result.Error == nil {
+		if existingUser.Username == username {
+			return errors.New("用户名已存在")
 		}
-		return false, nil
+		return errors.New("邮箱已被使用")
 	}
 
-	return true, nil
+	if result.Error != gorm.ErrRecordNotFound {
+		return errors.New("系统错误")
+	}
+
+	hashedPassword := utils.HashPassword(password)
+	newUser := model.User{
+		Username: username,
+		Password: hashedPassword,
+		Email:    email,
+	}
+
+	return s.db.Create(&newUser).Error
 }
 
-// 修复会话相关的数据库操作
-func (s *userService) GetUserSessionByToken(token string) (*model.UserSession, error) {
+func (s *userService) ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error) {
 	var session model.UserSession
 	if err := s.db.Where("token = ?", token).First(&session).Error; err != nil {
 		return nil, err
 	}
-	return &session, nil
-}
 
-func (s *userService) InvalidateUserSession(token string) error {
-	return s.db.Where("token = ?", token).Delete(&model.UserSession{}).Error
+	if !session.IsValid || time.Now().After(session.ExpiredAt) {
+		if err := s.db.Model(&model.UserSession{}).
+			Where("token = ?", token).
+			Update("is_valid", false).Error; err != nil {
+			return nil, err
+		}
+		return &TokenValidationResult{IsValid: false}, nil
+	}
+
+	claims, err := utils.ParseToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TokenValidationResult{
+		IsValid:  true,
+		UserID:   claims.UserID,
+		Username: claims.Username,
+	}, nil
 }
