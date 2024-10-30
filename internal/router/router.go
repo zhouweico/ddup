@@ -31,15 +31,18 @@ func SetupRouter() *gin.Engine {
 	v1 := r.Group("/api/v1")
 	{
 		// 公开路由
-		v1.POST("/sign-up", userHandler.Signup)
+		v1.POST("/register", userHandler.Signup)
 		v1.POST("/login", userHandler.Login)
 
 		// 需要认证的路由
 		auth := v1.Group("")
 		auth.Use(middleware.JWTAuth(userService))
 		{
-			// 用户相关路由
-
+			auth.POST("/logout", userHandler.Logout)
+			auth.PUT("/user", userHandler.UpdateUser)
+			auth.DELETE("/user", userHandler.DeleteUser)
+			auth.GET("/users", userHandler.GetUsers)    // 获取用户列表
+			auth.GET("/users/:id", userHandler.GetUser) // 获取用户详情
 		}
 	}
 
