@@ -22,3 +22,5 @@ vendor/
 
 # Environment files
 .env
+*.log
+/logs

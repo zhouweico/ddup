@@ -1,121 +1,73 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"strconv"
+	"log"
+	"time"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
+	Server struct {
+		Port string
+		Mode string
+	}
+	Database struct {
+		Host     string
+		Port     string
+		Name     string
+		User     string
+		Password string
+	}
+	JWT struct {
+		Secret             string
+		ExpiresIn          time.Duration
+		RefreshGracePeriod time.Duration
+	}
 }
 
-type ServerConfig struct {
-	Address string
-	Mode    string
+var globalConfig Config
+
+func GetConfig() *Config {
+	if globalConfig.JWT.Secret == "" {
+		log.Fatal("配置未初始化，请确保已调用 SetConfig()")
+	}
+	return &globalConfig
 }
 
-type DatabaseConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DBName   string
+// 在程序初始化时设置配置
+func SetConfig(cfg Config) {
+	globalConfig = cfg
 }
 
-type JWTConfig struct {
-	Secret    string
-	ExpiresIn int64
-}
-
-func Load() (*Config, error) {
-	// 1. 首先加载配置文件
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./configs")
+func LoadConfig() (*Config, error) {
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("读取配置文件失败: %w", err)
+		return nil, err
 	}
 
-	config := &Config{}
+	var config Config
+	config.Server.Port = viper.GetString("APP_PORT")
+	config.Server.Mode = viper.GetString("APP_ENV")
 
-	// 2. 从配置文件加载默认值
-	if err := viper.Unmarshal(config); err != nil {
-		return nil, fmt.Errorf("解析配置文件失败: %w", err)
-	}
+	config.Database.Host = viper.GetString("DB_HOST")
+	config.Database.Port = viper.GetString("DB_PORT")
+	config.Database.Name = viper.GetString("DB_NAME")
+	config.Database.User = viper.GetString("DB_USER")
+	config.Database.Password = viper.GetString("DB_PASSWORD")
 
-	// 3. 使用环境变量覆盖配置
-	// Server
-	if addr := os.Getenv("SERVER_ADDRESS"); addr != "" {
-		config.Server.Address = addr
-	}
-	if mode := os.Getenv("SERVER_MODE"); mode != "" {
-		config.Server.Mode = mode
-	}
+	config.JWT.Secret = viper.GetString("JWT_SECRET")
 
-	// Database
-	if host := os.Getenv("DB_HOST"); host != "" {
-		config.Database.Host = host
-	}
-	if port := os.Getenv("DB_PORT"); port != "" {
-		if portInt, err := strconv.Atoi(port); err == nil {
-			config.Database.Port = portInt
-		}
-	}
-	if user := os.Getenv("DB_USER"); user != "" {
-		config.Database.User = user
-	}
-	if password := os.Getenv("DB_PASSWORD"); password != "" {
-		config.Database.Password = password
-	}
-	if dbName := os.Getenv("DB_NAME"); dbName != "" {
-		config.Database.DBName = dbName
+	// 将 JWT_EXPIRES_IN 从秒转换为 time.Duration
+	viper.SetDefault("JWT_EXPIRES_IN", 86400)
+	config.JWT.ExpiresIn = time.Duration(viper.GetInt("JWT_EXPIRES_IN")) * time.Second
+	if gracePeriod, err := time.ParseDuration(viper.GetString("JWT_REFRESH_GRACE_PERIOD")); err == nil {
+		config.JWT.RefreshGracePeriod = gracePeriod
+	} else {
+		config.JWT.RefreshGracePeriod = 6 * time.Hour // 默认值
 	}
 
-	// JWT
-	if secret := os.Getenv("JWT_SECRET"); secret != "" {
-		config.JWT.Secret = secret
-	}
-	if expiresIn := os.Getenv("JWT_EXPIRES_IN"); expiresIn != "" {
-		if exp, err := strconv.ParseInt(expiresIn, 10, 64); err == nil {
-			config.JWT.ExpiresIn = exp
-		}
-	}
-
-	return config, nil
-}
-
-// GetDSN 返回数据库连接字符串
-func (c *DatabaseConfig) GetDSN() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		c.Host, c.Port, c.User, c.Password, c.DBName)
-}
-
-// 用于打印配置信息（去除敏感信息）
-func (c *Config) String() string {
-	return fmt.Sprintf(`
-Server:
-  Address: %s
-  Mode: %s
-Database:
-  Host: %s
-  Port: %d
-  User: %s
-  DBName: %s
-JWT:
-  ExpiresIn: %d
-`,
-		c.Server.Address,
-		c.Server.Mode,
-		c.Database.Host,
-		c.Database.Port,
-		c.Database.User,
-		c.Database.DBName,
-		c.JWT.ExpiresIn,
-	)
+	return &config, nil
 }

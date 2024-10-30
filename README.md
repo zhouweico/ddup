@@ -24,18 +24,16 @@ docker run -d \
 2. 创建数据库和用户
 
 ```bash
-# 1. 创建数据库
-docker exec -it ddup-postgres psql -U postgres -c "CREATE DATABASE ddup;"
-
-# 2. 创建用户并设置密码
+# 1. 创建用户并设置密码
 docker exec -it ddup-postgres psql -U postgres -c "CREATE USER ddup WITH PASSWORD 'Ddup@123456';"
+
+# 2. 创建数据库
+docker exec -it ddup-postgres psql -U postgres -c "CREATE DATABASE ddup owner ddup;"
+
 
 # 3. 授予权限
 docker exec -it ddup-postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ddup TO ddup;"
 docker exec -it ddup-postgres psql -U postgres -d ddup -c "GRANT ALL ON SCHEMA public TO ddup;"
-
-# 4. 设置数据库所有者
-docker exec -it ddup-postgres psql -U postgres -c "ALTER DATABASE ddup OWNER TO ddup;"
 ```
 
 3. 复制环境变量文件

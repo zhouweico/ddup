@@ -1,0 +1,153 @@
+basePath: /api/v1
+definitions:
+  handler.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handler.LoginResponse:
+    properties:
+      tokenInfo:
+        allOf:
+        - $ref: '#/definitions/handler.TokenInfo'
+        description: Token信息
+      userInfo:
+        allOf:
+        - $ref: '#/definitions/handler.User'
+        description: 用户信息
+    type: object
+  handler.Response:
+    properties:
+      code:
+        description: 响应码
+        type: integer
+      data:
+        description: 响应数据
+      message:
+        description: 响应信息
+        type: string
+    type: object
+  handler.SignupRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handler.SignupResponse:
+    properties:
+      tokenInfo:
+        allOf:
+        - $ref: '#/definitions/handler.TokenInfo'
+        description: Token信息
+      userInfo:
+        allOf:
+        - $ref: '#/definitions/handler.User'
+        description: 用户信息
+    type: object
+  handler.TokenInfo:
+    properties:
+      createdAt:
+        description: 创建时间
+        type: string
+      expiredAt:
+        description: 过期时间
+        type: string
+      expiresIn:
+        description: 有效时长(秒)
+        type: integer
+      token:
+        description: JWT token
+        type: string
+    type: object
+  handler.User:
+    properties:
+      id:
+        description: 用户ID
+        type: integer
+      username:
+        description: 用户名
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: DDUP 服务 API 文档
+  title: DDUP API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录接口
+      parameters:
+      - description: 登录信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 用户登录
+      tags:
+      - 用户管理
+  /sign-up:
+    post:
+      consumes:
+      - application/json
+      description: 用户注册接口
+      parameters:
+      - description: 注册信息
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SignupResponse'
+              type: object
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 用户注册
+      tags:
+      - 用户管理
+swagger: "2.0"
