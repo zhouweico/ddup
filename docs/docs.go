@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/login": {
             "post": {
-                "description": "���户登录",
+                "description": "用户登录",
                 "consumes": [
                     "application/json"
                 ],

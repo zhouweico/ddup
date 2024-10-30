@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Response 通用响应结构
@@ -67,8 +68,10 @@ type UserDetail struct {
 	Username    string    `json:"username"`    // 用户名
 	Email       string    `json:"email"`       // 邮箱
 	Password    string    `json:"-"`           // 密码，不返回给前端
+	Nickname    string    `json:"nickname"`    // 昵称
+	Bio         string    `json:"bio"`         // 简介
+	Gender      string    `json:"gender"`      // 性别
 	Avatar      string    `json:"avatar"`      // 头像
-	Role        string    `json:"role"`        // 角色
 	Status      int       `json:"status"`      // 状态
 	LastLoginAt time.Time `json:"lastLoginAt"` // 最后登录时间
 	CreatedAt   time.Time `json:"createdAt"`   // 创建时间

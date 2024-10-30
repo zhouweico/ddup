@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserService interface {
+type IUserService interface {
 	Signup(ctx context.Context, username, password string) error
 	Login(ctx context.Context, username, password string) (*LoginResult, error)
 	ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error)
@@ -60,6 +60,10 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
 	if err != nil {
 		return nil, fmt.Errorf("生成令牌失败: %w", err)
+	}
+
+	if err := s.db.Model(&user).Update("last_login", time.Now()).Error; err != nil {
+		return nil, fmt.Errorf("更新登录时间失败: %w", err)
 	}
 
 	return &LoginResult{

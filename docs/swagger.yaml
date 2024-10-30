@@ -141,7 +141,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: ���户登录
+      description: 用户登录
       parameters:
       - description: 登录信息
         in: body

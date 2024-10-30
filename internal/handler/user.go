@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"ddup-apis/internal/model"
 	"ddup-apis/internal/service"
 	"ddup-apis/internal/utils"
 	"net/http"
@@ -213,7 +212,11 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 // @Failure 401 {object} handler.Response "未授权"
 // @Router /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	users, total, err := h.userService.GetUsers()
+	// 获取分页参数
+	page := utils.StringToInt(c.DefaultQuery("page", "1"))
+	pageSize := utils.StringToInt(c.DefaultQuery("page_size", "10"))
+
+	users, total, err := h.userService.GetUsers(c.Request.Context(), page, pageSize)
 	if err != nil {
 		SendError(c, http.StatusInternalServerError, "获取用户列表失败")
 		return
@@ -226,6 +229,11 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 			ID:        user.ID,
 			Username:  user.Username,
 			Email:     user.Email,
+			Nickname:  user.Nickname,
+			Bio:       user.Bio,
+			Gender:    user.Gender,
+			Avatar:    user.Avatar,
+			Status:    user.Status,
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
 		})
