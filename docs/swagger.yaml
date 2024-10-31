@@ -136,17 +136,6 @@ definitions:
       username:
         type: string
     type: object
-  handler.UserListResponse:
-    properties:
-      total:
-        description: 总记录数
-        type: integer
-      users:
-        description: 用户列表
-        items:
-          $ref: '#/definitions/handler.User'
-        type: array
-    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -344,39 +333,4 @@ paths:
       security:
       - Bearer: []
       summary: 修改密码
-  /users:
-    get:
-      consumes:
-      - application/json
-      description: 分页获取用户列表
-      parameters:
-      - default: 1
-        description: 页码(默认1)
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: 每页数量(默认10)
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.UserListResponse'
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 获取用户列表
 swagger: "2.0"

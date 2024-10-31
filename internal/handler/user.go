@@ -2,9 +2,7 @@ package handler
 
 import (
 	"ddup-apis/internal/service"
-	"ddup-apis/internal/utils"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,21 +34,6 @@ type UpdateUserRequest struct {
 type UserListResponse struct {
 	Total int64  `json:"total"` // 总记录数
 	Users []User `json:"users"` // 用户列表
-}
-
-// UserDetailResponse 用户详情响应
-type UserDetailResponse struct {
-	ID        uint       `json:"id"`
-	Username  string     `json:"username"`
-	Email     string     `json:"email"`
-	Mobile    string     `json:"mobile"`   // 手机号
-	Location  string     `json:"location"` // 位置
-	Nickname  string     `json:"nickname"`
-	Bio       string     `json:"bio"`
-	Gender    string     `json:"gender"`
-	Birthday  *time.Time `json:"birthday"`
-	Avatar    string     `json:"avatar"`
-	LastLogin *time.Time `json:"lastLogin"`
 }
 
 type UserHandler struct {
@@ -141,50 +124,6 @@ func (h *UserHandler) Logout(c *gin.Context) {
 		return
 	}
 	SendSuccess(c, "退出成功", nil)
-}
-
-// @Summary 获取用户列表
-// @Description 分页获取用户列表
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param page query int false "页码(默认1)" default(1)
-// @Param page_size query int false "每页数量(默认10)" default(10)
-// @Success 200 {object} handler.Response{data=UserListResponse} "获取成功"
-// @Failure 401 {object} handler.Response "未授权"
-// @Router /users [get]
-func (h *UserHandler) GetUsers(c *gin.Context) {
-	// 获取分页参数
-	page := utils.StringToInt(c.DefaultQuery("page", "1"))
-	pageSize := utils.StringToInt(c.DefaultQuery("page_size", "10"))
-
-	users, total, err := h.userService.GetUsers(c.Request.Context(), page, pageSize)
-	if err != nil {
-		SendError(c, http.StatusInternalServerError, "获取用户列表失败")
-		return
-	}
-
-	// 转换为 UserDetail 列表
-	var userDetails []UserDetail
-	for _, user := range users {
-		userDetails = append(userDetails, UserDetail{
-			ID:        user.ID,
-			Username:  user.Username,
-			Email:     user.Email,
-			Nickname:  user.Nickname,
-			Bio:       user.Bio,
-			Gender:    user.Gender,
-			Avatar:    user.Avatar,
-			Status:    user.Status,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		})
-	}
-
-	SendSuccess(c, "获取用户列表成功", gin.H{
-		"total": total,
-		"users": userDetails,
-	})
 }
 
 // @Summary 获取用户详情

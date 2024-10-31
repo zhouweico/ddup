@@ -77,3 +77,18 @@ type UserDetail struct {
 	CreatedAt   time.Time `json:"createdAt"`   // 创建时间
 	UpdatedAt   time.Time `json:"updatedAt"`   // 更新时间
 }
+
+// UserDetailResponse 用户详情响应
+type UserDetailResponse struct {
+	ID        uint       `json:"id"`
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Mobile    string     `json:"mobile"`   // 手机号
+	Location  string     `json:"location"` // 位置
+	Nickname  string     `json:"nickname"`
+	Bio       string     `json:"bio"`
+	Gender    string     `json:"gender"`
+	Birthday  *time.Time `json:"birthday"`
+	Avatar    string     `json:"avatar"`
+	LastLogin *time.Time `json:"lastLogin"`
+}
