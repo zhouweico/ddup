@@ -14,15 +14,24 @@ type Config struct {
 		Mode string
 	}
 	Database struct {
-		Host     string
-		Port     string
-		Name     string
-		User     string
-		Password string
+		Host         string
+		Port         string
+		Name         string
+		User         string
+		Password     string
+		MaxOpenConns int           // 最大打开连接数
+		MaxIdleConns int           // 最大空闲连接数
+		MaxLifetime  time.Duration // 连接最大生命周期
+		MaxIdleTime  time.Duration // 空闲连接最大生命周期
+		RetryTimes   int           // 重试次数
+		RetryDelay   time.Duration // 重试延迟
 	}
 	JWT struct {
 		Secret    string
 		ExpiresIn time.Duration
+	}
+	HealthCheck struct {
+		Interval time.Duration // 健康检查间隔时间
 	}
 }
 
@@ -65,6 +74,17 @@ func LoadConfig() (*Config, error) {
 
 	// 将 JWT_EXPIRES_IN 从秒转换为 time.Duration
 	config.JWT.ExpiresIn = time.Duration(viper.GetInt("JWT_EXPIRES_IN")) * time.Second
+
+	// 数据库连接池配置
+	config.Database.MaxOpenConns = viper.GetInt("DB_MAX_OPEN_CONNS")
+	config.Database.MaxIdleConns = viper.GetInt("DB_MAX_IDLE_CONNS")
+	config.Database.MaxLifetime = viper.GetDuration("DB_MAX_LIFETIME")
+	config.Database.MaxIdleTime = viper.GetDuration("DB_MAX_IDLE_TIME")
+	config.Database.RetryTimes = viper.GetInt("DB_RETRY_TIMES")
+	config.Database.RetryDelay = viper.GetDuration("DB_RETRY_DELAY")
+
+	// 健康检查配置
+	config.HealthCheck.Interval = viper.GetDuration("HEALTH_CHECK_INTERVAL")
 
 	// 验证配置
 	if err := validateConfig(&config); err != nil {

@@ -5,6 +5,7 @@ import (
 
 	"ddup-apis/internal/config"
 	"ddup-apis/internal/db"
+	"ddup-apis/internal/middleware"
 	"ddup-apis/internal/router"
 )
 
@@ -30,6 +31,9 @@ func main() {
 
 	// 初始化路由
 	r := router.SetupRouter()
+
+	// 启动定期健康检查
+	middleware.PeriodicHealthCheck(cfg.HealthCheck.Interval)
 
 	// 启动服务器
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
