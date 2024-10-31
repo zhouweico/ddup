@@ -94,6 +94,7 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 
 	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
 	if err != nil {
+		logger.Error("生成令牌失败", zap.Error(err))
 		return nil, fmt.Errorf("生成令牌失败: %w", err)
 	}
 
@@ -126,7 +127,7 @@ func (s *UserService) ValidateToken(ctx context.Context, token string) (*TokenVa
 
 	var user model.User
 	if err := s.db.First(&user, session.UserID).Error; err != nil {
-		return nil, fmt.Errorf("获取用户信息失败: %w", err)
+		return nil, errors.New(404, "获取用户信息失败", err)
 	}
 
 	return &TokenValidationResult{

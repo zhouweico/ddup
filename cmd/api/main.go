@@ -8,6 +8,8 @@ import (
 	"ddup-apis/internal/logger"
 	"ddup-apis/internal/middleware"
 	"ddup-apis/internal/router"
+
+	"go.uber.org/zap"
 )
 
 // @title DDUP API
@@ -36,7 +38,7 @@ func main() {
 	// 初始化数据库
 	logger.Info("初始化数据库")
 	if err := db.InitDB(cfg); err != nil {
-		log.Fatalf("初始化数据库失败: %v", err)
+		logger.Fatal("初始化数据库失败", zap.Error(err))
 	}
 
 	// 初始化路由
@@ -48,6 +50,6 @@ func main() {
 	// 启动服务
 	logger.Info("启动服务")
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
-		log.Fatalf("服务器启动失败: %v", err)
+		logger.Fatal("服务器启动失败", zap.Error(err))
 	}
 }
