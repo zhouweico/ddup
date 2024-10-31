@@ -18,16 +18,16 @@ type Claims struct {
 }
 
 // GenerateToken 生成 JWT Token 并保存到数据库
-func GenerateToken(id uint, userID string, username string) (token string, createdAt time.Time, expiresIn int64, expiredAt time.Time, err error) {
+func GenerateToken(userID uint, username string) (string, time.Time, int64, time.Time, error) {
 	cfg := config.GetConfig()
 	now := time.Now()
-	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
-	expiredAt = now.Add(cfg.JWT.ExpiresIn)
-	createdAt = now
+	expiresIn := int64(cfg.JWT.ExpiresIn.Seconds())
+	expiredAt := now.Add(cfg.JWT.ExpiresIn)
+	createdAt := now
 
 	// 查找该用户所有有效的 Token
 	var userSessions []model.UserSession
-	err = db.DB.Where("user_id = ? AND is_valid = ? AND expired_at > ?", id, true, now).
+	err := db.DB.Where("user_id = ? AND is_valid = ? AND expired_at > ?", userID, true, now).
 		Order("created_at DESC").
 		Find(&userSessions).Error
 	if err != nil {
@@ -66,7 +66,7 @@ func GenerateToken(id uint, userID string, username string) (token string, creat
 
 	// 将该用户所有旧 Token 标记为无效（包括已过期的）
 	if err = db.DB.Model(&model.UserSession{}).
-		Where("user_id = ?", id).
+		Where("user_id = ?", userID).
 		Update("is_valid", false).Error; err != nil {
 		return "", time.Time{}, 0, time.Time{}, err
 	}
@@ -76,7 +76,7 @@ func GenerateToken(id uint, userID string, username string) (token string, creat
 	expiresIn = int64(cfg.JWT.ExpiresIn.Seconds())
 
 	claims := &Claims{
-		UserID:   id,
+		UserID:   userID,
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiredAt),
@@ -85,14 +85,14 @@ func GenerateToken(id uint, userID string, username string) (token string, creat
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err = jwtToken.SignedString([]byte(cfg.JWT.Secret))
+	token, err := jwtToken.SignedString([]byte(cfg.JWT.Secret))
 	if err != nil {
 		return "", time.Time{}, 0, time.Time{}, err
 	}
 
 	// 保存新 Token 到数据库
 	newUserSession := model.UserSession{
-		UserID:    id,
+		UserID:    userID,
 		Token:     token,
 		IsValid:   true,
 		ExpiredAt: expiredAt,

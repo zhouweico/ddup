@@ -541,9 +541,6 @@
         "handler.User": {
             "type": "object",
             "properties": {
-                "userid": {
-                    "type": "string"
-                },
                 "username": {
                     "type": "string"
                 }
@@ -567,6 +564,9 @@
                 "gender": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "lastLogin": {
                     "type": "string"
                 },
@@ -579,9 +579,6 @@
                     "type": "string"
                 },
                 "nickname": {
-                    "type": "string"
-                },
-                "userid": {
                     "type": "string"
                 },
                 "username": {

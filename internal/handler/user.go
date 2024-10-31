@@ -40,7 +40,7 @@ type UserListResponse struct {
 
 // UserDetailResponse 用户详情响应
 type UserDetailResponse struct {
-	UserID    string     `json:"userid"`
+	ID        uint       `json:"id"`
 	Username  string     `json:"username"`
 	Email     string     `json:"email"`
 	Mobile    string     `json:"mobile"`   // 手机号
@@ -78,7 +78,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	UserID, err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
+	err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -87,7 +87,6 @@ func (h *UserHandler) Register(c *gin.Context) {
 	SendSuccess(c, "注册成功", RegisterResponse{
 		UserInfo: User{
 			Username: req.Username,
-			UserID:   UserID,
 		},
 	})
 }
@@ -123,7 +122,6 @@ func (h *UserHandler) Login(c *gin.Context) {
 		},
 		UserInfo: User{
 			Username: result.User.Username,
-			UserID:   result.User.UserID,
 		},
 	})
 }
@@ -205,14 +203,14 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
+	user, err := h.userService.GetUserByID(c.Request.Context(), userID.(uint))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return
 	}
 
 	SendSuccess(c, "获取成功", UserDetailResponse{
-		UserID:    user.UserID,
+		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
 		Mobile:    user.Mobile,
@@ -249,7 +247,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
+	user, err := h.userService.GetUserByID(c.Request.Context(), userID.(uint))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return
@@ -302,7 +300,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
+	user, err := h.userService.GetUserByID(c.Request.Context(), userID.(uint))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return
@@ -339,7 +337,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByUserID(c.Request.Context(), userID.(string))
+	user, err := h.userService.GetUserByID(c.Request.Context(), userID.(uint))
 	if err != nil {
 		SendError(c, http.StatusNotFound, err.Error())
 		return

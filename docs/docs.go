@@ -547,9 +547,6 @@ const docTemplate = `{
         "handler.User": {
             "type": "object",
             "properties": {
-                "userid": {
-                    "type": "string"
-                },
                 "username": {
                     "type": "string"
                 }
@@ -573,6 +570,9 @@ const docTemplate = `{
                 "gender": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "lastLogin": {
                     "type": "string"
                 },
@@ -585,9 +585,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nickname": {
-                    "type": "string"
-                },
-                "userid": {
                     "type": "string"
                 },
                 "username": {

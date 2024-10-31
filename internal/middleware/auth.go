@@ -29,15 +29,9 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 			return
 		}
 
-		requestUserID := c.Param("userid")
-		if requestUserID != "" && requestUserID != result.UserID {
-			sendError(c, http.StatusForbidden, "无权访问该资源")
-			c.Abort()
-			return
-		}
-
 		c.Set("userID", result.UserID)
 		c.Set("username", result.Username)
+		c.Set("IsValid", result.IsValid)
 		c.Next()
 	}
 }

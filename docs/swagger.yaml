@@ -106,8 +106,6 @@ definitions:
     type: object
   handler.User:
     properties:
-      userid:
-        type: string
       username:
         type: string
     type: object
@@ -123,6 +121,8 @@ definitions:
         type: string
       gender:
         type: string
+      id:
+        type: integer
       lastLogin:
         type: string
       location:
@@ -132,8 +132,6 @@ definitions:
         description: 手机号
         type: string
       nickname:
-        type: string
-      userid:
         type: string
       username:
         type: string
