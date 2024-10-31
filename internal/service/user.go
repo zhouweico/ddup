@@ -2,13 +2,14 @@ package service
 
 import (
 	"context"
+	"ddup-apis/internal/logger"
 	"ddup-apis/internal/model"
 	"ddup-apis/internal/utils"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -60,7 +61,7 @@ func (s *UserService) Register(ctx context.Context, username, password string) e
 
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		log.Printf("密码加密失败: %v", err)
+		logger.Error("密码加密失败", zap.Error(err))
 		return fmt.Errorf("密码加密失败: %w", err)
 	}
 
@@ -70,7 +71,7 @@ func (s *UserService) Register(ctx context.Context, username, password string) e
 	}
 
 	if err := s.db.Create(&newUser).Error; err != nil {
-		log.Printf("创建用户失败: %v", err)
+		logger.Error("创建用户失败", zap.Error(err))
 		return fmt.Errorf("创建用户失败: %w", err)
 	}
 

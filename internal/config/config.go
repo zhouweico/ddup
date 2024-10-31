@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
 )
 
 type Config struct {
@@ -32,6 +33,14 @@ type Config struct {
 	}
 	HealthCheck struct {
 		Interval time.Duration // 健康检查间隔时间
+	}
+	Log struct {
+		Level      zapcore.Level `mapstructure:"level"`
+		Filename   string        `mapstructure:"filename"`
+		MaxSize    int           `mapstructure:"max_size"`
+		MaxBackups int           `mapstructure:"max_backups"`
+		MaxAge     int           `mapstructure:"max_age"`
+		Compress   bool          `mapstructure:"compress"`
 	}
 }
 
@@ -85,6 +94,14 @@ func LoadConfig() (*Config, error) {
 
 	// 健康检查配置
 	config.HealthCheck.Interval = viper.GetDuration("HEALTH_CHECK_INTERVAL")
+
+	// 日志配置
+	config.Log.Level = zapcore.Level(viper.GetInt("LOG_LEVEL"))
+	config.Log.Filename = viper.GetString("LOG_FILENAME")
+	config.Log.MaxSize = viper.GetInt("LOG_MAX_SIZE")
+	config.Log.MaxBackups = viper.GetInt("LOG_MAX_BACKUPS")
+	config.Log.MaxAge = viper.GetInt("LOG_MAX_AGE")
+	config.Log.Compress = viper.GetBool("LOG_COMPRESS")
 
 	// 验证配置
 	if err := validateConfig(&config); err != nil {
