@@ -4,6 +4,8 @@ import (
 	"ddup-apis/internal/service"
 	"net/http"
 
+	"ddup-apis/internal/errors"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,20 +13,20 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
-			sendError(c, http.StatusUnauthorized, "未提供认证信息")
+			c.Error(errors.ErrUnauthorized)
 			c.Abort()
 			return
 		}
 
 		result, err := userService.ValidateToken(c.Request.Context(), token)
 		if err != nil {
-			sendError(c, http.StatusUnauthorized, "Token 验证失败")
+			c.Error(errors.Wrap(err, "Token 验证失败"))
 			c.Abort()
 			return
 		}
 
 		if !result.IsValid {
-			sendError(c, http.StatusUnauthorized, "Token 已失效")
+			c.Error(errors.New(http.StatusUnauthorized, "Token 已失效", nil))
 			c.Abort()
 			return
 		}

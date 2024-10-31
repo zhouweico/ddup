@@ -19,6 +19,7 @@ func SetupRouter() *gin.Engine {
 	// 添加全局中间件
 	r.Use(middleware.Logger())
 	r.Use(middleware.Cors())
+	r.Use(middleware.ErrorHandler())
 	r.Use(gin.Recovery())
 
 	// 初始化 services

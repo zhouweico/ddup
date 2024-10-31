@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"ddup-apis/internal/errors"
 	"ddup-apis/internal/service"
 	"net/http"
 
@@ -57,21 +58,16 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 func (h *UserHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		SendError(c, http.StatusBadRequest, "无效的请求参数")
+		c.Error(errors.ErrInvalidRequest)
 		return
 	}
 
-	err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
-	if err != nil {
-		SendError(c, http.StatusBadRequest, err.Error())
+	if err := h.userService.Register(c.Request.Context(), req.Username, req.Password); err != nil {
+		c.Error(errors.Wrap(err, "注册失败"))
 		return
 	}
 
-	SendSuccess(c, "注册成功", RegisterResponse{
-		UserInfo: User{
-			Username: req.Username,
-		},
-	})
+	SendSuccess(c, "注册成功", nil)
 }
 
 // @Summary 用户登录

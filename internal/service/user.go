@@ -5,9 +5,10 @@ import (
 	"ddup-apis/internal/logger"
 	"ddup-apis/internal/model"
 	"ddup-apis/internal/utils"
-	"errors"
 	"fmt"
 	"time"
+
+	"ddup-apis/internal/errors"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -52,11 +53,11 @@ func (s *UserService) Register(ctx context.Context, username, password string) e
 	result := s.db.Where("username = ?", username).First(&existingUser)
 
 	if result.Error == nil {
-		return errors.New("用户名已存在")
+		return errors.New(400, "用户名已存在", nil)
 	}
 
 	if result.Error != gorm.ErrRecordNotFound {
-		return errors.New("系统错误")
+		return fmt.Errorf("查询用户失败: %w", result.Error)
 	}
 
 	hashedPassword, err := utils.HashPassword(password)
@@ -82,13 +83,13 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 	var user model.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New("用户不存在")
+			return nil, errors.New(404, "用户不存在", nil)
 		}
 		return nil, err
 	}
 
 	if !utils.ComparePasswords(user.Password, password) {
-		return nil, errors.New("密码错误")
+		return nil, errors.New(401, "密码错误", nil)
 	}
 
 	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
@@ -163,7 +164,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*model.User
 	var user model.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New("用户不存在")
+			return nil, errors.New(404, "用户不存在", nil)
 		}
 		return nil, err
 	}
@@ -178,7 +179,7 @@ func (s *UserService) UpdateUser(ctx context.Context, id uint, updates map[strin
 
 	result := s.db.Model(&model.User{}).Where("id = ?", id).Updates(updates)
 	if result.RowsAffected == 0 {
-		return errors.New("用户不存在")
+		return errors.New(404, "用户不存在", nil)
 	}
 	return result.Error
 }
@@ -186,7 +187,7 @@ func (s *UserService) UpdateUser(ctx context.Context, id uint, updates map[strin
 func (s *UserService) DeleteUser(ctx context.Context, userID uint) error {
 	result := s.db.Delete(&model.User{}, userID)
 	if result.RowsAffected == 0 {
-		return errors.New("用户不存在")
+		return errors.New(404, "用户不存在", nil)
 	}
 	return result.Error
 }
@@ -194,15 +195,15 @@ func (s *UserService) DeleteUser(ctx context.Context, userID uint) error {
 func (s *UserService) ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error {
 	var user model.User
 	if err := s.db.First(&user, userID).Error; err != nil {
-		return errors.New("用户不存在")
+		return errors.New(404, "用户不存在", nil)
 	}
 
 	if !utils.ComparePasswords(user.Password, oldPassword) {
-		return errors.New("原密码错误")
+		return errors.New(401, "原密码错误", nil)
 	}
 
 	if oldPassword == newPassword {
-		return errors.New("新密码不能与原密码相同")
+		return errors.New(400, "新密码不能与原密码相同", nil)
 	}
 
 	hashedPassword, err := utils.HashPassword(newPassword)
