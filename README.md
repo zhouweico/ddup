@@ -127,6 +127,13 @@ go run cmd/api/main.go
 ./scripts/test.sh internal/handler
 ```
 
+### API 测试
+
+```bash
+# 执行所有测试
+./scripts/api_test.sh
+```
+
 ## 部署
 
 ### Docker Compose 部署
