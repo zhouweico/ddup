@@ -29,6 +29,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# 推送到远程仓库
+git push
+
+# 检查推送是否成功
+if [ $? -ne 0 ]; then
+    echo "推送到远程仓库失败"
+    exit 1
+fi
+
 echo "完成！"
 echo "- Swagger 文档已更新"
-echo "- 更改已提交: $1" 
+echo "- 更改已提交: $1"
+echo "- 更改已推送到远程仓库"
