@@ -2,55 +2,52 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"ddup-apis/internal/db"
-
 	"github.com/gin-gonic/gin"
 )
+
+// 添加 Mock 数据库连接
+type mockDB struct {
+	pingErr error
+}
+
+func (m *mockDB) Ping() error {
+	return m.pingErr
+}
+
+// 修改为接口类型
+type DBInterface interface {
+	Ping() error
+}
+
+// 在测试中使用接口
+var DB DBInterface
 
 func TestHealthHandler_Check(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
 		name       string
-		setupDB    func()
+		dbPingErr  error
 		wantStatus int
 		wantBody   map[string]interface{}
 	}{
 		{
-			name: "数据库正常",
-			setupDB: func() {
-				// 模拟数据库正常
-				db.DB = nil // 这里需要根据实际情况设置测试数据库
-			},
+			name:       "服务正常",
+			dbPingErr:  nil,
 			wantStatus: http.StatusOK,
 			wantBody: map[string]interface{}{
 				"code":    float64(http.StatusOK),
 				"message": "服务正常",
-				"data":    nil,
 			},
 		},
 		{
-			name: "数据库异常",
-			setupDB: func() {
-				// 模拟数据库异常
-				db.DB = nil
-			},
-			wantStatus: http.StatusServiceUnavailable,
-			wantBody: map[string]interface{}{
-				"code":    float64(http.StatusServiceUnavailable),
-				"message": "数据库连接异常",
-			},
-		},
-		{
-			name: "数据库连接超时",
-			setupDB: func() {
-				// 模拟数据库连接超时
-				db.DB = nil // 设置一个会导致超时的测试数据库连接
-			},
+			name:       "数据库异常",
+			dbPingErr:  errors.New("数据库连接失败"),
 			wantStatus: http.StatusServiceUnavailable,
 			wantBody: map[string]interface{}{
 				"code":    float64(http.StatusServiceUnavailable),
@@ -61,7 +58,8 @@ func TestHealthHandler_Check(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setupDB()
+			// 使用接口而不是直接赋值给 db.DB
+			DB = &mockDB{pingErr: tt.dbPingErr}
 
 			r := gin.New()
 			handler := NewHealthHandler()

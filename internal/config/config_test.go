@@ -20,17 +20,17 @@ func TestLoadConfig(t *testing.T) {
 	content := `
 SERVER_PORT=8080
 SERVER_MODE=debug
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=testdb
-DATABASE_USER=testuser
-DATABASE_PASSWORD=testpass
-DATABASE_MAX_OPEN_CONNS=10
-DATABASE_MAX_IDLE_CONNS=5
-DATABASE_MAX_LIFETIME=1h
-DATABASE_MAX_IDLE_TIME=30m
-DATABASE_RETRY_TIMES=3
-DATABASE_RETRY_DELAY=5s
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=testdb
+DB_USER=testuser
+DB_PASSWORD=testpass
+DB_MAX_OPEN_CONNS=10
+DB_MAX_IDLE_CONNS=5
+DB_MAX_LIFETIME=1h
+DB_MAX_IDLE_TIME=30m
+DB_RETRY_TIMES=3
+DB_RETRY_DELAY=5s
 JWT_SECRET=test-secret
 JWT_EXPIRES_IN=24h
 HEALTH_CHECK_INTERVAL=30s
@@ -106,4 +106,39 @@ func TestGetConfig(t *testing.T) {
 			t.Errorf("GetConfig().JWT.Secret = %v, want %v", cfg.JWT.Secret, "test-secret")
 		}
 	})
+}
+
+// 添加测试配置文件
+func setupTestEnv(t *testing.T) func() {
+	// 创建临时测试配置文件
+	content := []byte(`
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=testdb
+DB_USER=testuser
+DB_PASSWORD=testpass
+SERVER_PORT=8080
+JWT_SECRET=test-secret
+HEALTH_CHECK_INTERVAL=10s
+`)
+	tmpfile, err := os.CreateTemp("", "test.env")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := tmpfile.Write(content); err != nil {
+		t.Fatal(err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// 设置环境变量
+	os.Setenv("ENV_FILE", tmpfile.Name())
+
+	// 返回清理函数
+	return func() {
+		os.Remove(tmpfile.Name())
+		os.Unsetenv("ENV_FILE")
+	}
 }

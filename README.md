@@ -117,6 +117,16 @@ go run cmd/api/main.go
 ./scripts/commit.sh "提交信息"
 ```
 
+### 单元测试
+
+```bash
+# 执行所有测试
+./scripts/test.sh
+
+# 执行特定包的测试
+./scripts/test.sh internal/handler
+```
+
 ## 部署
 
 ### Docker Compose 部署
