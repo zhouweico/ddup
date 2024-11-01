@@ -104,4 +104,7 @@ func TestTokenInfo(t *testing.T) {
 	if info.ExpiresIn != expiresIn {
 		t.Errorf("TokenInfo.ExpiresIn = %v, want %v", info.ExpiresIn, expiresIn)
 	}
+	if !info.CreatedAt.Equal(now) {
+		t.Errorf("TokenInfo.CreatedAt = %v, want %v", info.CreatedAt, now)
+	}
 }
