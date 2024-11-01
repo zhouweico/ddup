@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"reflect"
+	"sync"
 	"testing"
 	"time"
 
+	"ddup-apis/internal/errors"
 	"ddup-apis/internal/model"
 	"ddup-apis/internal/utils"
 
@@ -18,6 +21,31 @@ type mockDB struct {
 	createErr error
 	updateErr error
 	deleteErr error
+}
+
+func (m *mockDB) First(dest interface{}, conds ...interface{}) *gorm.DB {
+	if m.findErr != nil {
+		return &gorm.DB{Error: m.findErr}
+	}
+	return m.DB.First(dest, conds...)
+}
+
+func (m *mockDB) Create(value interface{}) *gorm.DB {
+	if m.createErr != nil {
+		return &gorm.DB{Error: m.createErr}
+	}
+	return m.DB.Create(value)
+}
+
+func (m *mockDB) Delete(value interface{}, conds ...interface{}) *gorm.DB {
+	if m.deleteErr != nil {
+		return &gorm.DB{Error: m.deleteErr}
+	}
+	return m.DB.Delete(value, conds...)
+}
+
+func (m *mockDB) Model(value interface{}) *gorm.DB {
+	return m.DB.Model(value)
 }
 
 func setupTestService(t *testing.T) (*UserService, *mockDB) {
@@ -213,97 +241,336 @@ func TestUserService_GetUserByID(t *testing.T) {
 }
 
 func TestUserService_ValidateToken(t *testing.T) {
-	service, mock := setupTestService(t)
-
-	// 创建测试用户和会话
-	testUser := &model.User{
-		Model:    gorm.Model{ID: 1},
-		Username: "testuser",
-	}
-	validSession := &model.UserSession{
-		Token:     "valid_token",
-		UserID:    testUser.ID,
-		IsValid:   true,
-		ExpiredAt: time.Now().Add(24 * time.Hour), // 24小时后过期
-	}
-	expiredSession := &model.UserSession{
-		Token:     "expired_token",
-		UserID:    testUser.ID,
-		IsValid:   true,
-		ExpiredAt: time.Now().Add(-24 * time.Hour), // 24小时前过期
-	}
+	service, _ := setupTestService(t)
 
 	tests := []struct {
-		name      string
-		token     string
-		setupMock func()
-		want      *TokenValidationResult
-		wantErr   bool
+		name    string
+		token   string
+		setup   func()
+		want    *TokenValidationResult
+		wantErr bool
 	}{
 		{
 			name:  "有效token",
-			token: "valid_token",
-			setupMock: func() {
-				mock.DB.Create(testUser)
-				mock.DB.Create(validSession)
+			token: "valid-token",
+			setup: func() {
+				// 在数据库中创建有效的session
+				session := model.UserSession{
+					UserID:    1,
+					Token:     "valid-token",
+					IsValid:   true,
+					ExpiredAt: time.Now().Add(time.Hour),
+				}
+				service.db.Create(&session)
 			},
 			want: &TokenValidationResult{
-				UserID:   testUser.ID,
-				Username: testUser.Username,
-				IsValid:  true,
+				UserID:  1,
+				IsValid: true,
 			},
 			wantErr: false,
 		},
 		{
-			name:  "过期token",
-			token: "expired_token",
-			setupMock: func() {
-				mock.DB.Create(testUser)
-				mock.DB.Create(expiredSession)
-			},
-			want: &TokenValidationResult{
-				IsValid: false,
-			},
-			wantErr: false,
-		},
-		{
-			name:  "不存在的token",
-			token: "nonexistent_token",
-			setupMock: func() {
-				// 不需要设置任何数据
-			},
-			want: &TokenValidationResult{
-				IsValid: false,
-			},
-			wantErr: false,
+			name:    "无效token",
+			token:   "invalid-token",
+			setup:   func() {},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setupMock != nil {
-				tt.setupMock()
+			if tt.setup != nil {
+				tt.setup()
 			}
 
 			got, err := service.ValidateToken(tt.token)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("UserService.ValidateToken() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ValidateToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ValidateToken() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUserService_UpdateUser(t *testing.T) {
+	service, mock := setupTestService(t)
+
+	tests := []struct {
+		name    string
+		userID  uint
+		updates map[string]interface{}
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name:   "更新成功",
+			userID: 1,
+			updates: map[string]interface{}{
+				"nickname": "新昵称",
+				"email":    "new@example.com",
+			},
+			setup: func() {
+				mock.DB.Create(&model.User{
+					Model:    gorm.Model{ID: 1},
+					Username: "testuser",
+				})
+			},
+			wantErr: false,
+		},
+		{
+			name:   "用户不存在",
+			userID: 999,
+			updates: map[string]interface{}{
+				"nickname": "新昵称",
+			},
+			setup:   func() {},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			err := service.UpdateUser(context.Background(), tt.userID, tt.updates)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UpdateUser() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUserService_DeleteUser(t *testing.T) {
+	service, mock := setupTestService(t)
+
+	tests := []struct {
+		name    string
+		userID  uint
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name:   "删除成功",
+			userID: 1,
+			setup: func() {
+				user := &model.User{
+					Model:    gorm.Model{ID: 1},
+					Username: "testuser",
+					Email:    "test@example.com",
+				}
+				mock.DB.Create(user)
+			},
+			wantErr: false,
+		},
+		{
+			name:   "用户不存在",
+			userID: 999,
+			setup: func() {
+				mock.findErr = gorm.ErrRecordNotFound
+			},
+			wantErr: true,
+		},
+		{
+			name:   "数据库错误",
+			userID: 1,
+			setup: func() {
+				mock.deleteErr = errors.New(500, "数据库错误", nil)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			err := service.DeleteUser(context.Background(), tt.userID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeleteUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if !tt.wantErr {
-				if got.IsValid != tt.want.IsValid {
-					t.Errorf("UserService.ValidateToken() IsValid = %v, want %v", got.IsValid, tt.want.IsValid)
+				// 验证用户是否已被软删除
+				var user model.User
+				err := mock.DB.Unscoped().First(&user, tt.userID).Error
+				if err != nil {
+					t.Errorf("查找删除的用户失败: %v", err)
 				}
-				if got.IsValid {
-					if got.UserID != tt.want.UserID {
-						t.Errorf("UserService.ValidateToken() UserID = %v, want %v", got.UserID, tt.want.UserID)
-					}
-					if got.Username != tt.want.Username {
-						t.Errorf("UserService.ValidateToken() Username = %v, want %v", got.Username, tt.want.Username)
-					}
+				if user.DeletedAt.Time.IsZero() {
+					t.Error("用户未被软删除")
 				}
 			}
 		})
 	}
+}
+
+func TestUserService_Logout(t *testing.T) {
+	service, mock := setupTestService(t)
+
+	tests := []struct {
+		name    string
+		token   string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name:  "登出成功",
+			token: "valid-token",
+			setup: func() {
+				session := &model.UserSession{
+					UserID:    1,
+					Token:     "valid-token",
+					IsValid:   true,
+					ExpiredAt: time.Now().Add(time.Hour),
+				}
+				mock.DB.Create(session)
+			},
+			wantErr: false,
+		},
+		{
+			name:  "无效token",
+			token: "invalid-token",
+			setup: func() {
+				mock.findErr = gorm.ErrRecordNotFound
+			},
+			wantErr: true,
+		},
+		{
+			name:  "已登出的token",
+			token: "logged-out-token",
+			setup: func() {
+				session := &model.UserSession{
+					UserID:    1,
+					Token:     "logged-out-token",
+					IsValid:   false,
+					ExpiredAt: time.Now().Add(time.Hour),
+				}
+				mock.DB.Create(session)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			err := service.Logout(context.Background(), tt.token)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Logout() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr {
+				// 验证session是否已被标记为无效
+				var session model.UserSession
+				err := mock.DB.Where("token = ?", tt.token).First(&session).Error
+				if err != nil {
+					t.Errorf("查找session失败: %v", err)
+				}
+				if session.IsValid {
+					t.Error("session未被标记为无效")
+				}
+			}
+		})
+	}
+}
+
+// 添加一些边界情况的测试
+func TestUserService_EdgeCases(t *testing.T) {
+	service, mock := setupTestService(t)
+
+	t.Run("并发登录测试", func(t *testing.T) {
+		userID := uint(1)
+		username := "testuser"
+
+		// 创建测试用户
+		mock.DB.Create(&model.User{
+			Model:    gorm.Model{ID: userID},
+			Username: username,
+			Password: "hashedpass",
+		})
+
+		// 模拟并发登录
+		var wg sync.WaitGroup
+		for i := 0; i < 5; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, err := service.Login(context.Background(), username, "password")
+				if err != nil {
+					t.Errorf("并发登录失败: %v", err)
+				}
+			}()
+		}
+		wg.Wait()
+
+		// 验证只有最新的session是有效的
+		var sessions []model.UserSession
+		mock.DB.Where("user_id = ?", userID).Find(&sessions)
+
+		validCount := 0
+		for _, session := range sessions {
+			if session.IsValid {
+				validCount++
+			}
+		}
+
+		if validCount != 1 {
+			t.Errorf("有效session数量 = %d, 期望 1", validCount)
+		}
+	})
+
+	t.Run("密码重试限制测试", func(t *testing.T) {
+		user := &model.User{
+			Model:         gorm.Model{ID: 2},
+			Username:      "testuser2",
+			Password:      "hashedpass",
+			LoginAttempts: 0,
+		}
+		mock.DB.Create(user)
+
+		// 尝试多次错误登录
+		for i := 0; i < 5; i++ {
+			service.Login(context.Background(), user.Username, "wrongpass")
+		}
+
+		// 验证账户是否被锁定
+		var updatedUser model.User
+		mock.DB.First(&updatedUser, user.ID)
+		if updatedUser.LoginAttempts < 5 {
+			t.Error("登录尝试次数未正确记录")
+		}
+		if updatedUser.LockedUntil == nil || updatedUser.LockedUntil.Before(time.Now()) {
+			t.Error("账户未被锁定")
+		}
+	})
+
+	t.Run("Token过期测试", func(t *testing.T) {
+		expiredToken := "expired-token"
+		session := &model.UserSession{
+			UserID:    3,
+			Token:     expiredToken,
+			IsValid:   true,
+			ExpiredAt: time.Now().Add(-time.Hour), // 已过期
+		}
+		mock.DB.Create(session)
+
+		result, err := service.ValidateToken(expiredToken)
+		if err == nil {
+			t.Error("期望过期token返回错误")
+		}
+		if result != nil {
+			t.Error("过期token不应返回有效结果")
+		}
+	})
 }
