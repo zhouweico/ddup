@@ -44,7 +44,7 @@ func NewSocialHandler(service *service.SocialService) *SocialHandler {
 // @Security Bearer
 // @Param request body SocialRequest true "社交媒体账号信息"
 // @Success 200 {object} Response
-// @Router /social- [post]
+// @Router /api/v1/users/socials [post]
 func (h *SocialHandler) CreateSocial(c *gin.Context) {
 	var req SocialRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -80,7 +80,7 @@ func (h *SocialHandler) CreateSocial(c *gin.Context) {
 // @Produce json
 // @Security Bearer
 // @Success 200 {object} Response{data=[]SocialResponse}
-// @Router /social- [get]
+// @Router /api/v1/users/socials [get]
 func (h *SocialHandler) GetUserSocial(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -117,7 +117,7 @@ func (h *SocialHandler) GetUserSocial(c *gin.Context) {
 // @Param id path string true "社交媒体账号ID"
 // @Param request body SocialRequest true "社交媒体账号信息"
 // @Success 200 {object} Response
-// @Router /social-/{id} [put]
+// @Router /api/v1/users/socials/{id} [put]
 func (h *SocialHandler) UpdateSocial(c *gin.Context) {
 	var req SocialRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -153,7 +153,7 @@ func (h *SocialHandler) UpdateSocial(c *gin.Context) {
 // @Security Bearer
 // @Param id path string true "社交媒体账号ID"
 // @Success 200 {object} Response
-// @Router /social-/{id} [delete]
+// @Router /api/v1/users/socials/{id} [delete]
 func (h *SocialHandler) DeleteSocial(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {

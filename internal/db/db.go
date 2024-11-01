@@ -56,6 +56,8 @@ func InitDB(cfg *config.Config) error {
 		&model.User{},
 		&model.Session{},
 		&model.Social{},
+		&model.Organization{},
+		&model.OrganizationMember{},
 	); err != nil {
 		return fmt.Errorf("数据库迁移失败: %w", err)
 	}

@@ -8,33 +8,7 @@
     },
     "basePath": "/api/v1",
     "paths": {
-        "/health": {
-            "get": {
-                "description": "检查服务和数据库连接状态",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "系统"
-                ],
-                "summary": "健康检查",
-                "responses": {
-                    "200": {
-                        "description": "服务正常",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
-                    },
-                    "503": {
-                        "description": "服务异常",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/login": {
+        "/api/v1/auth/login": {
             "post": {
                 "description": "用户登录",
                 "consumes": [
@@ -83,7 +57,7 @@
                 }
             }
         },
-        "/logout": {
+        "/api/v1/auth/logout": {
             "post": {
                 "security": [
                     {
@@ -111,7 +85,7 @@
                 }
             }
         },
-        "/register": {
+        "/api/v1/auth/register": {
             "post": {
                 "description": "用户注册",
                 "consumes": [
@@ -148,18 +122,18 @@
                 }
             }
         },
-        "/social-": {
+        "/api/v1/organizations": {
             "get": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "获取当前用户的所有社交媒体账号",
+                "description": "获取当前用户所属的所有组织",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "获取社交媒体账号列表",
+                "summary": "获取用户组织列表",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -174,7 +148,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.SocialResponse"
+                                                "$ref": "#/definitions/dto.OrganizationResponse"
                                             }
                                         }
                                     }
@@ -190,22 +164,22 @@
                         "Bearer": []
                     }
                 ],
-                "description": "为当前用户创建社交媒体账号",
+                "description": "创建新的组织，创建者默认成为管理员",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "创建社交媒体账号",
+                "summary": "创建组织",
                 "parameters": [
                     {
-                        "description": "社交媒体账号信息",
+                        "description": "组织信息",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SocialRequest"
+                            "$ref": "#/definitions/dto.CreateOrganizationRequest"
                         }
                     }
                 ],
@@ -213,42 +187,54 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.OrganizationResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             }
         },
-        "/social-/{id}": {
+        "/api/v1/organizations/{id}": {
             "put": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "更新指定的社交媒体账号",
+                "description": "更新组织基本信息（仅管理员可操作）",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "更新社交媒体账号",
+                "summary": "更新组织信息",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "社交媒体账号ID",
+                        "type": "integer",
+                        "description": "组织ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "社交媒体账号信息",
+                        "description": "更新信息",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SocialRequest"
+                            "$ref": "#/definitions/dto.UpdateOrganizationRequest"
                         }
                     }
                 ],
@@ -267,15 +253,15 @@
                         "Bearer": []
                     }
                 ],
-                "description": "删除指定的社交媒体账号",
+                "description": "删除组织（仅管理员可操作）",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "删除社交媒体账号",
+                "summary": "删除组织",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "社交媒体账号ID",
+                        "type": "integer",
+                        "description": "组织ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -291,7 +277,266 @@
                 }
             }
         },
-        "/user": {
+        "/api/v1/organizations/{id}/join": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "加入已存在的组织",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "加入组织",
+                "parameters": [
+                    {
+                        "description": "组织ID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.JoinOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/organizations/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取组织的所有成员",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取组织成员列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组织ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.MemberResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "添加新成员到组织（仅管理员可操作）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "添加组织成员",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组织ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "成员信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/organizations/{id}/members/{userid}": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新组织成员信息（仅管理员可操作）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "更新组织成员",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组织ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "userid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "从组织中移除成员（仅管理员可操作）",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "移除组织成员",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组织ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "userid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/organizations/{id}/members/{userid}/role": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "设置组织成员的角色（仅管理员可操作）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "设置成员角色",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组织ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "userid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "角色信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
             "get": {
                 "security": [
                     {
@@ -403,7 +648,7 @@
                 }
             }
         },
-        "/user/password": {
+        "/api/v1/users/password": {
             "put": {
                 "security": [
                     {
@@ -450,9 +695,197 @@
                     }
                 }
             }
+        },
+        "/api/v1/users/socials": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取当前用户的所有社交媒体账号",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取社交媒体账号列表",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SocialResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "为当前用户创建社交媒体账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "创建社交媒体账号",
+                "parameters": [
+                    {
+                        "description": "社交媒体账号信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SocialRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/socials/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新指定的社交媒体账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "更新社交媒体账号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "社交媒体账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "社交媒体账号信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SocialRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "删除指定的社交媒体账号",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "删除社交媒体账号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "社交媒体账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "检查服务和数据库连接状态",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "系统"
+                ],
+                "summary": "健康检查",
+                "responses": {
+                    "200": {
+                        "description": "服务正常",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    },
+                    "503": {
+                        "description": "服务异常",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dto.AddMemberRequest": {
+            "type": "object",
+            "required": [
+                "role",
+                "user_id"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "member"
+                    ]
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -467,6 +900,45 @@
                 "oldPassword": {
                     "type": "string",
                     "minLength": 6
+                }
+            }
+        },
+        "dto.CreateOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.JoinOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "organization_id"
+            ],
+            "properties": {
+                "organization_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -505,6 +977,59 @@
                 }
             }
         },
+        "dto.MemberResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganizationResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "description": "当前用户在组织中的角色",
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.RegisterRequest": {
             "type": "object",
             "required": [
@@ -521,6 +1046,46 @@
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 3
+                }
+            }
+        },
+        "dto.UpdateMemberRequest": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "member"
+                    ]
+                }
+            }
+        },
+        "dto.UpdateOrganizationRequest": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "website": {
+                    "type": "string"
                 }
             }
         },

@@ -1,5 +1,18 @@
 basePath: /api/v1
 definitions:
+  dto.AddMemberRequest:
+    properties:
+      role:
+        enum:
+        - admin
+        - member
+        type: string
+      user_id:
+        type: integer
+    required:
+    - role
+    - user_id
+    type: object
   dto.ChangePasswordRequest:
     properties:
       newPassword:
@@ -11,6 +24,32 @@ definitions:
     required:
     - newPassword
     - oldPassword
+    type: object
+  dto.CreateOrganizationRequest:
+    properties:
+      avatar:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      location:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      website:
+        type: string
+    required:
+    - name
+    type: object
+  dto.JoinOrganizationRequest:
+    properties:
+      organization_id:
+        type: integer
+    required:
+    - organization_id
     type: object
   dto.LoginRequest:
     properties:
@@ -35,6 +74,41 @@ definitions:
       user:
         $ref: '#/definitions/dto.UserResponse'
     type: object
+  dto.MemberResponse:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      nickname:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  dto.OrganizationResponse:
+    properties:
+      avatar:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      name:
+        type: string
+      role:
+        description: 当前用户在组织中的角色
+        type: string
+      website:
+        type: string
+    type: object
   dto.RegisterRequest:
     properties:
       password:
@@ -48,6 +122,33 @@ definitions:
     required:
     - password
     - username
+    type: object
+  dto.UpdateMemberRequest:
+    properties:
+      role:
+        enum:
+        - admin
+        - member
+        type: string
+    required:
+    - role
+    type: object
+  dto.UpdateOrganizationRequest:
+    properties:
+      avatar:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      location:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      website:
+        type: string
     type: object
   dto.UpdateUserRequest:
     properties:
@@ -141,24 +242,7 @@ info:
   title: DDUP API
   version: "1.0"
 paths:
-  /health:
-    get:
-      description: 检查服务和数据库连接状态
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 服务正常
-          schema:
-            $ref: '#/definitions/handler.Response'
-        "503":
-          description: 服务异常
-          schema:
-            $ref: '#/definitions/handler.Response'
-      summary: 健康检查
-      tags:
-      - 系统
-  /login:
+  /api/v1/auth/login:
     post:
       consumes:
       - application/json
@@ -187,7 +271,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.Response'
       summary: 用户登录
-  /logout:
+  /api/v1/auth/logout:
     post:
       description: 用户退出登录
       produces:
@@ -204,7 +288,7 @@ paths:
       security:
       - Bearer: []
       summary: 退出登录
-  /register:
+  /api/v1/auth/register:
     post:
       consumes:
       - application/json
@@ -228,9 +312,9 @@ paths:
           schema:
             $ref: '#/definitions/handler.Response'
       summary: 用户注册
-  /social-:
+  /api/v1/organizations:
     get:
-      description: 获取当前用户的所有社交媒体账号
+      description: 获取当前用户所属的所有组织
       produces:
       - application/json
       responses:
@@ -242,42 +326,47 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.SocialResponse'
+                    $ref: '#/definitions/dto.OrganizationResponse'
                   type: array
               type: object
       security:
       - Bearer: []
-      summary: 获取社交媒体账号列表
+      summary: 获取用户组织列表
     post:
       consumes:
       - application/json
-      description: 为当前用户创建社交媒体账号
+      description: 创建新的组织，创建者默认成为管理员
       parameters:
-      - description: 社交媒体账号信息
+      - description: 组织信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.SocialRequest'
+          $ref: '#/definitions/dto.CreateOrganizationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.Response'
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.OrganizationResponse'
+              type: object
       security:
       - Bearer: []
-      summary: 创建社交媒体账号
-  /social-/{id}:
+      summary: 创建组织
+  /api/v1/organizations/{id}:
     delete:
-      description: 删除指定的社交媒体账号
+      description: 删除组织（仅管理员可操作）
       parameters:
-      - description: 社交媒体账号ID
+      - description: 组织ID
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -287,23 +376,23 @@ paths:
             $ref: '#/definitions/handler.Response'
       security:
       - Bearer: []
-      summary: 删除社交媒体账号
+      summary: 删除组织
     put:
       consumes:
       - application/json
-      description: 更新指定的社交媒体账号
+      description: 更新组织基本信息（仅管理员可操作）
       parameters:
-      - description: 社交媒体账号ID
+      - description: 组织ID
         in: path
         name: id
         required: true
-        type: string
-      - description: 社交媒体账号信息
+        type: integer
+      - description: 更新信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.SocialRequest'
+          $ref: '#/definitions/dto.UpdateOrganizationRequest'
       produces:
       - application/json
       responses:
@@ -313,8 +402,169 @@ paths:
             $ref: '#/definitions/handler.Response'
       security:
       - Bearer: []
-      summary: 更新社交媒体账号
-  /user:
+      summary: 更新组织信息
+  /api/v1/organizations/{id}/join:
+    post:
+      consumes:
+      - application/json
+      description: 加入已存在的组织
+      parameters:
+      - description: 组织ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JoinOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 加入组织
+  /api/v1/organizations/{id}/members:
+    get:
+      description: 获取组织的所有成员
+      parameters:
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.MemberResponse'
+                  type: array
+              type: object
+      security:
+      - Bearer: []
+      summary: 获取组织成员列表
+    post:
+      consumes:
+      - application/json
+      description: 添加新成员到组织（仅管理员可操作）
+      parameters:
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 成员信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 添加组织成员
+  /api/v1/organizations/{id}/members/{userid}:
+    delete:
+      description: 从组织中移除成员（仅管理员可操作）
+      parameters:
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 用户ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 移除组织成员
+    put:
+      consumes:
+      - application/json
+      description: 更新组织成员信息（仅管理员可操作）
+      parameters:
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 用户ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: 更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 更新组织成员
+  /api/v1/organizations/{id}/members/{userid}/role:
+    put:
+      consumes:
+      - application/json
+      description: 设置组织成员的角色（仅管理员可操作）
+      parameters:
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 用户ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: 角色信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 设置成员角色
+  /api/v1/users:
     delete:
       description: 删除用户账号
       produces:
@@ -381,7 +631,7 @@ paths:
       security:
       - Bearer: []
       summary: 更新用户信息
-  /user/password:
+  /api/v1/users/password:
     put:
       consumes:
       - application/json
@@ -411,6 +661,109 @@ paths:
       security:
       - Bearer: []
       summary: 修改密码
+  /api/v1/users/socials:
+    get:
+      description: 获取当前用户的所有社交媒体账号
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.SocialResponse'
+                  type: array
+              type: object
+      security:
+      - Bearer: []
+      summary: 获取社交媒体账号列表
+    post:
+      consumes:
+      - application/json
+      description: 为当前用户创建社交媒体账号
+      parameters:
+      - description: 社交媒体账号信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SocialRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 创建社交媒体账号
+  /api/v1/users/socials/{id}:
+    delete:
+      description: 删除指定的社交媒体账号
+      parameters:
+      - description: 社交媒体账号ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 删除社交媒体账号
+    put:
+      consumes:
+      - application/json
+      description: 更新指定的社交媒体账号
+      parameters:
+      - description: 社交媒体账号ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 社交媒体账号信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SocialRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 更新社交媒体账号
+  /health:
+    get:
+      description: 检查服务和数据库连接状态
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务正常
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "503":
+          description: 服务异常
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 健康检查
+      tags:
+      - 系统
 securityDefinitions:
   Bearer:
     description: Type "Bearer" followed by a space and JWT token.

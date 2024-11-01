@@ -23,7 +23,7 @@ func NewUserHandler(userService service.IUserService) *UserHandler {
 // @Param request body dto.RegisterRequest true "注册信息"
 // @Success 200 {object} Response "注册成功"
 // @Failure 400 {object} Response "无效的请求参数"
-// @Router /register [post]
+// @Router /api/v1/auth/register [post]
 func (h *UserHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -46,7 +46,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 // @Param request body dto.LoginRequest true "登录信息"
 // @Success 200 {object} Response{data=dto.LoginResponse} "登录成功"
 // @Failure 400 {object} Response "无效的请求参数"
-// @Router /login [post]
+// @Router /api/v1/auth/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -69,7 +69,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Security Bearer
 // @Success 200 {object} Response{data=dto.UserResponse} "获取成功"
 // @Failure 401 {object} Response "未授权"
-// @Router /user [get]
+// @Router /api/v1/users [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -95,7 +95,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 // @Success 200 {object} Response "更新成功"
 // @Failure 400 {object} Response "无效的请求参数"
 // @Failure 401 {object} Response "未授权"
-// @Router /user [put]
+// @Router /api/v1/users [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -126,7 +126,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Success 200 {object} Response "修改成功"
 // @Failure 400 {object} Response "无效的请求参数"
 // @Failure 401 {object} Response "未授权"
-// @Router /user/password [put]
+// @Router /api/v1/users/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	var req dto.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -154,7 +154,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 // @Security Bearer
 // @Success 200 {object} Response "退出成功"
 // @Failure 401 {object} Response "未授权"
-// @Router /logout [post]
+// @Router /api/v1/auth/logout [post]
 func (h *UserHandler) Logout(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	if token == "" {
@@ -176,7 +176,7 @@ func (h *UserHandler) Logout(c *gin.Context) {
 // @Security Bearer
 // @Success 200 {object} Response "删除成功"
 // @Failure 401 {object} Response "未授权"
-// @Router /user [delete]
+// @Router /api/v1/users [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
