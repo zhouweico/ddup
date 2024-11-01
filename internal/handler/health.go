@@ -13,9 +13,12 @@ func NewHealthHandler() *HealthHandler {
 	return &HealthHandler{}
 }
 
+// Health 健康检查
 // @Summary 健康检查
 // @Description 检查服务和数据库连接状态
+// @Tags 系统
 // @Produce json
+// @BasePath /
 // @Success 200 {object} Response "服务正常"
 // @Failure 503 {object} Response "服务异常"
 // @Router /health [get]

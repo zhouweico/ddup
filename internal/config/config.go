@@ -68,8 +68,8 @@ func LoadConfig() (*Config, error) {
 	var config Config
 
 	// 服务器配置
-	config.Server.Port = viper.GetString("APP_PORT")
-	config.Server.Mode = viper.GetString("APP_ENV")
+	config.Server.Port = viper.GetString("SERVER_PORT")
+	config.Server.Mode = viper.GetString("SERVER_MODE")
 
 	// 数据库配置
 	config.Database.Host = viper.GetString("DB_HOST")

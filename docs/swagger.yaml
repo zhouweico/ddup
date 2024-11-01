@@ -158,6 +158,8 @@ paths:
           schema:
             $ref: '#/definitions/handler.Response'
       summary: 健康检查
+      tags:
+      - 系统
   /login:
     post:
       consumes:
@@ -348,4 +350,10 @@ paths:
       security:
       - Bearer: []
       summary: 修改密码
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

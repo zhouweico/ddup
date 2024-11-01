@@ -45,8 +45,7 @@
 ## 技术栈
 - Go 1.21+
 - PostgreSQL 14+
-- Gin Web Framework
-- GORM
+- Docker (可选)
 
 ## 开发环境搭建
 1. 数据库环境
@@ -91,18 +90,19 @@ go run cmd/api/main.go
 ## 项目结构
 ```
 .
-├── cmd/                # 主要的应用程序入口
-│   └── api/           # API 服务入口
-├── configs/           # 配置文件
-├── internal/          # 私有应用程序和库代码
+├── cmd/              # 主要的应用程序入口
+│   └── api/          # API 服务入口
+├── docs/             # 文档
+├── internal/         # 私有应用程序和库代码
 │   ├── config/       # 配置
+│   ├── db/           # 数据库
+│   ├── errors/       # 错误处理
 │   ├── handler/      # HTTP 处理器
+│   ├── logger/       # 日志工具
 │   ├── middleware/   # HTTP 中间件
 │   ├── model/        # 数据库模型
 │   ├── repository/   # 数据库操作
-│   └── service/      # 业务逻辑
-├── pkg/              # 可以被外部应用程序使用的库代码
-│   ├── logger/       # 日志工具
+│   ├── service/      # 业务逻辑
 │   └── utils/        # 通用工具
 └── scripts/          # 脚本和工具
 ```
@@ -112,8 +112,32 @@ go run cmd/api/main.go
 ### 提交代码
 
 使用提供的脚本自动生成 Swagger 文档并提交代码：
+
 ```bash
 ./scripts/commit.sh "提交信息"
+```
+
+## 部署
+
+### Docker Compose 部署
+
+1. 部署运行
+
+```bash
+# 部署（会自动调用 build.sh）
+./scripts/deploy.sh
+
+# 如果只想构建镜像
+./scripts/build.sh
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+
+# 重启服务
+docker-compose restart
 ```
 
 ## 配置说明
