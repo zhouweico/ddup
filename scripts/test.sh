@@ -14,29 +14,30 @@ NC='\033[0m'
 
 echo -e "${YELLOW}准备测试环境...${NC}"
 
-# 创建测试配置
-cat > .env.test << EOF
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=test_db
-DB_USER=postgres
-DB_PASSWORD=postgres
-SERVER_PORT=8080
-JWT_SECRET=test-secret
-HEALTH_CHECK_INTERVAL=10s
-EOF
-
-# 设置测试环境变量
-export ENV_FILE=.env.test
-export GIN_MODE=test
-
 echo -e "${YELLOW}开始执行单元测试...${NC}\n"
 
 # 执行测试并捕获输出
-TEST_OUTPUT=$(go test -v -cover ./internal/... 2>&1)
+TEST_OUTPUT=$(go test -v -cover ./internal/... -coverprofile=coverage.out 2>&1)
 TEST_RESULT=$?
+
+# 生成测试报告
+if [ -f coverage.out ]; then
+    go tool cover -html=coverage.out -o coverage.html
+    echo -e "${GREEN}测试报告已生成: coverage.html${NC}"
+fi
 
 # 清理测试配置
 rm -f .env.test
 
-# 输出测试结果和
+# 根据测试结果输出相应信息
+if [ $TEST_RESULT -eq 0 ]; then
+    echo -e "${GREEN}测试通过！${NC}"
+else
+    echo -e "${RED}测试失败！${NC}"
+fi
+
+# 输出测试详细信息
+echo -e "\n${YELLOW}测试详细输出：${NC}"
+echo "${TEST_OUTPUT}"
+
+exit $TEST_RESULT
