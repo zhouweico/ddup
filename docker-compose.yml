@@ -1,5 +1,5 @@
 services:
-  app:
+  apis:
     image: ddup-apis:latest
     container_name: ddup-apis
     ports:

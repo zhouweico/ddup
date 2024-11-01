@@ -127,7 +127,7 @@ func validateConfig(cfg *Config) error {
 		return errors.New("JWT expiration time must be positive")
 	}
 	if cfg.Database.Host == "" || cfg.Database.Port == "" {
-		return errors.New("Database host and port are required")
+		return errors.New("database host and port are required")
 	}
 	return nil
 }
