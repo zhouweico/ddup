@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  handler.ChangePasswordRequest:
+  dto.ChangePasswordRequest:
     properties:
       newPassword:
         minLength: 6
@@ -12,7 +12,7 @@ definitions:
     - newPassword
     - oldPassword
     type: object
-  handler.LoginRequest:
+  dto.LoginRequest:
     properties:
       password:
         type: string
@@ -22,18 +22,20 @@ definitions:
     - password
     - username
     type: object
-  handler.LoginResponse:
+  dto.LoginResponse:
     properties:
-      tokenInfo:
-        allOf:
-        - $ref: '#/definitions/handler.TokenInfo'
-        description: Token信息
-      userInfo:
-        allOf:
-        - $ref: '#/definitions/handler.User'
-        description: 用户信息
+      createdAt:
+        type: string
+      expiredAt:
+        type: string
+      expiresIn:
+        type: integer
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.UserResponse'
     type: object
-  handler.RegisterRequest:
+  dto.RegisterRequest:
     properties:
       password:
         maxLength: 50
@@ -47,69 +49,24 @@ definitions:
     - password
     - username
     type: object
-  handler.RegisterResponse:
-    properties:
-      userInfo:
-        allOf:
-        - $ref: '#/definitions/handler.User'
-        description: 用户信息
-    type: object
-  handler.Response:
-    properties:
-      code:
-        description: 响应码
-        type: integer
-      data:
-        description: 响应数据
-      message:
-        description: 响应信息
-        type: string
-    type: object
-  handler.TokenInfo:
-    properties:
-      createdAt:
-        description: 创建时间
-        type: string
-      expiredAt:
-        description: 过期时间
-        type: string
-      expiresIn:
-        description: 有效时长(秒)
-        type: integer
-      token:
-        description: JWT token
-        type: string
-    type: object
-  handler.UpdateUserRequest:
+  dto.UpdateUserRequest:
     properties:
       avatar:
-        description: 头像URL
         type: string
       bio:
-        description: 用户简介
         type: string
       email:
-        description: 邮箱
         type: string
       gender:
-        description: 性别
         type: string
       location:
-        description: 位置
         type: string
       mobile:
-        description: 手机号
         type: string
       nickname:
-        description: 用户昵称
         type: string
     type: object
-  handler.User:
-    properties:
-      username:
-        type: string
-    type: object
-  handler.UserDetailResponse:
+  dto.UserResponse:
     properties:
       avatar:
         type: string
@@ -126,15 +83,57 @@ definitions:
       lastLogin:
         type: string
       location:
-        description: 位置
         type: string
       mobile:
-        description: 手机号
         type: string
       nickname:
         type: string
       username:
         type: string
+    type: object
+  handler.Response:
+    properties:
+      code:
+        description: 响应码
+        type: integer
+      data:
+        description: 响应数据
+      message:
+        description: 响应信息
+        type: string
+    type: object
+  handler.SocialRequest:
+    properties:
+      description:
+        description: 描述
+        type: string
+      platform:
+        description: 平台名称
+        type: string
+      url:
+        description: 个人主页链接
+        type: string
+      username:
+        description: 平台用户名
+        type: string
+    required:
+    - platform
+    - username
+    type: object
+  handler.SocialResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      platform:
+        type: string
+      url:
+        type: string
+      username:
+        type: string
+      verified:
+        type: boolean
     type: object
 info:
   contact: {}
@@ -170,7 +169,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.LoginRequest'
+          $ref: '#/definitions/dto.LoginRequest'
       produces:
       - application/json
       responses:
@@ -181,21 +180,15 @@ paths:
             - $ref: '#/definitions/handler.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.LoginResponse'
+                  $ref: '#/definitions/dto.LoginResponse'
               type: object
         "400":
           description: 无效的请求参数
           schema:
             $ref: '#/definitions/handler.Response'
-        "401":
-          description: 用户名或密码错误
-          schema:
-            $ref: '#/definitions/handler.Response'
       summary: 用户登录
   /logout:
     post:
-      consumes:
-      - application/json
       description: 用户退出登录
       produces:
       - application/json
@@ -210,7 +203,7 @@ paths:
             $ref: '#/definitions/handler.Response'
       security:
       - Bearer: []
-      summary: 用户退出
+      summary: 退出登录
   /register:
     post:
       consumes:
@@ -222,29 +215,108 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.RegisterRequest'
+          $ref: '#/definitions/dto.RegisterRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 注册成功
           schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.RegisterResponse'
-              type: object
+            $ref: '#/definitions/handler.Response'
         "400":
           description: 无效的请求参数
           schema:
             $ref: '#/definitions/handler.Response'
       summary: 用户注册
-  /user:
-    delete:
+  /social-:
+    get:
+      description: 获取当前用户的所有社交媒体账号
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.SocialResponse'
+                  type: array
+              type: object
+      security:
+      - Bearer: []
+      summary: 获取社交媒体账号列表
+    post:
       consumes:
       - application/json
-      description: 软除用户账号
+      description: 为当前用户创建社交媒体账号
+      parameters:
+      - description: 社交媒体账号信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SocialRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 创建社交媒体账号
+  /social-/{id}:
+    delete:
+      description: 删除指定的社交媒体账号
+      parameters:
+      - description: 社交媒体账号ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 删除社交媒体账号
+    put:
+      consumes:
+      - application/json
+      description: 更新指定的社交媒体账号
+      parameters:
+      - description: 社交媒体账号ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 社交媒体账号信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SocialRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 更新社交媒体账号
+  /user:
+    delete:
+      description: 删除用户账号
       produces:
       - application/json
       responses:
@@ -256,17 +328,11 @@ paths:
           description: 未授权
           schema:
             $ref: '#/definitions/handler.Response'
-        "500":
-          description: 系统错误
-          schema:
-            $ref: '#/definitions/handler.Response'
       security:
       - Bearer: []
       summary: 删除用户
     get:
-      consumes:
-      - application/json
-      description: 获取用户详细信息（仅允许获取自己的信息）
+      description: 获取当前登录用户信息
       produces:
       - application/json
       responses:
@@ -277,19 +343,15 @@ paths:
             - $ref: '#/definitions/handler.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.UserDetailResponse'
+                  $ref: '#/definitions/dto.UserResponse'
               type: object
         "401":
           description: 未授权
           schema:
             $ref: '#/definitions/handler.Response'
-        "403":
-          description: 禁止访问
-          schema:
-            $ref: '#/definitions/handler.Response'
       security:
       - Bearer: []
-      summary: 获取用户详情
+      summary: 获取用户信息
     put:
       consumes:
       - application/json
@@ -300,7 +362,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateUserRequest'
+          $ref: '#/definitions/dto.UpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -323,23 +385,23 @@ paths:
     put:
       consumes:
       - application/json
-      description: 用户修改密码
+      description: 修改用户密码
       parameters:
-      - description: 修改密码请求
+      - description: 密码信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ChangePasswordRequest'
+          $ref: '#/definitions/dto.ChangePasswordRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: 密码修改成功
+          description: 修改成功
           schema:
             $ref: '#/definitions/handler.Response'
         "400":
-          description: 请求参数错误
+          description: 无效的请求参数
           schema:
             $ref: '#/definitions/handler.Response'
         "401":

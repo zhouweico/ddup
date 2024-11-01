@@ -21,6 +21,7 @@ type User struct {
 	LastLogin     *time.Time `json:"last_login"`
 	LoginAttempts int        `gorm:"default:0" json:"-"`
 	LockedUntil   *time.Time `json:"-"`
+	Social        []Social   `gorm:"foreignKey:UserID"`
 	gorm.Model
 }
 

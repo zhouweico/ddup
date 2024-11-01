@@ -51,7 +51,7 @@
 1. 数据库环境
 ```bash
 docker run -d \
-    --name ddup-postgres \
+    --name ddup-postgres-dev \
     -p 5432:5432 \
     -e POSTGRES_PASSWORD=Admin@123456 \
     -e PGDATA=/var/lib/postgresql/data/pgdata \
@@ -63,15 +63,15 @@ docker run -d \
 
 ```bash
 # 1. 创建用户并设置密码
-docker exec -it ddup-postgres psql -U postgres -c "CREATE USER ddup WITH PASSWORD 'Ddup@123456';"
+docker exec -it ddup-postgres-dev psql -U postgres -c "CREATE USER ddup WITH PASSWORD 'Ddup@123456';"
 
 # 2. 创建数据库
-docker exec -it ddup-postgres psql -U postgres -c "CREATE DATABASE ddup owner ddup;"
+docker exec -it ddup-postgres-dev psql -U postgres -c "CREATE DATABASE ddup owner ddup;"
 
 
 # 3. 授予权限
-docker exec -it ddup-postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ddup TO ddup;"
-docker exec -it ddup-postgres psql -U postgres -d ddup -c "GRANT ALL ON SCHEMA public TO ddup;"
+docker exec -it ddup-postgres-dev psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ddup TO ddup;"
+docker exec -it ddup-postgres-dev psql -U postgres -d ddup -c "GRANT ALL ON SCHEMA public TO ddup;"
 ```
 
 3. 复制环境变量文件

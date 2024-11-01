@@ -2,196 +2,245 @@ package service
 
 import (
 	"context"
-	"ddup-apis/internal/logger"
+	"ddup-apis/internal/dto"
+	"ddup-apis/internal/errors"
 	"ddup-apis/internal/model"
+	"ddup-apis/internal/repository"
 	"ddup-apis/internal/utils"
-	"fmt"
 	"time"
 
-	"ddup-apis/internal/errors"
-
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type IUserService interface {
-	Register(ctx context.Context, username, password string) error
-	Login(ctx context.Context, username, password string) (*LoginResult, error)
+	Register(ctx context.Context, req *dto.RegisterRequest) error
+	Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error)
+	GetUserByID(ctx context.Context, id uint) (*dto.UserResponse, error)
+	UpdateUser(ctx context.Context, id uint, req *dto.UpdateUserRequest) error
+	DeleteUser(ctx context.Context, id uint) error
+	ChangePassword(ctx context.Context, id uint, req *dto.ChangePasswordRequest) error
 	ValidateToken(token string) (*TokenValidationResult, error)
 	Logout(ctx context.Context, token string) error
-	GetUserByID(ctx context.Context, userID uint) (*model.User, error)
-	ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
-	UpdateUser(ctx context.Context, userID uint, updates map[string]interface{}) error
-	DeleteUser(ctx context.Context, userID uint) error
-}
-
-type LoginResult struct {
-	Token     string
-	CreatedAt time.Time
-	ExpiresIn int64
-	ExpiredAt time.Time
-	User      *model.User
-}
-
-type TokenValidationResult struct {
-	UserID   uint
-	Username string
-	IsValid  bool
 }
 
 type UserService struct {
-	db *gorm.DB
+	userRepo    IUserRepository
+	sessionRepo ISessionRepository
 }
 
 func NewUserService(db *gorm.DB) *UserService {
-	return &UserService{db: db}
+	return &UserService{
+		userRepo:    repository.NewUserRepository(db),
+		sessionRepo: repository.NewSessionRepository(db),
+	}
 }
 
-func (s *UserService) Register(ctx context.Context, username, password string) error {
-	var existingUser model.User
-	result := s.db.Where("username = ?", username).First(&existingUser)
+// 1. 添加仓储层接口定义
+type IUserRepository interface {
+	Create(ctx context.Context, user *model.User) error
+	GetByID(ctx context.Context, id uint) (*model.User, error)
+	GetByUsername(ctx context.Context, username string) (*model.User, error)
+	Update(ctx context.Context, id uint, updates map[string]interface{}) error
+	UpdatePassword(ctx context.Context, id uint, hashedPassword string) error
+	UpdateLastLogin(ctx context.Context, id uint) error
+	Delete(ctx context.Context, id uint) error
+}
 
-	if result.Error == nil {
+type ISessionRepository interface {
+	CreateSession(ctx context.Context, session *model.Session) error
+	GetSessionByToken(ctx context.Context, token string) (*model.Session, error)
+	InvalidateSession(ctx context.Context, token string) error
+}
+
+// 2. 将 TokenValidationResult 移到更合适的位置（比如 dto 包）
+type TokenValidationResult struct {
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
+	Valid    bool   `json:"valid"`
+}
+
+// 3. 统一错误处理
+func (s *UserService) Register(ctx context.Context, req *dto.RegisterRequest) error {
+	user, err := s.userRepo.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return errors.Wrap(err, "查询用户失败")
+	}
+	if user != nil {
 		return errors.New(400, "用户名已存在", nil)
 	}
 
-	if result.Error != gorm.ErrRecordNotFound {
-		return fmt.Errorf("查询用户失败: %w", result.Error)
-	}
-
-	hashedPassword, err := utils.HashPassword(password)
+	// 密码加密
+	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		logger.Error("密码加密失败", zap.Error(err))
-		return fmt.Errorf("密码加密失败: %w", err)
+		return errors.Wrap(err, "密码加密失败")
 	}
 
-	newUser := model.User{
-		Username: username,
+	// 创建用户
+	user = &model.User{
+		Username: req.Username,
 		Password: hashedPassword,
+		Nickname: req.Username,
 	}
 
-	if err := s.db.Create(&newUser).Error; err != nil {
-		logger.Error("创建用户失败", zap.Error(err))
-		return fmt.Errorf("创建用户失败: %w", err)
-	}
-
-	return nil
+	return s.userRepo.Create(ctx, user)
 }
 
-func (s *UserService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
-	var user model.User
-	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New(404, "用户不存在", nil)
-		}
-		return nil, err
+func (s *UserService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
+	// 获取用户
+	user, err := s.userRepo.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return nil, errors.New(401, "用户名或密码错误", nil)
 	}
 
-	if !utils.ComparePasswords(user.Password, password) {
-		return nil, errors.New(401, "密码错误", nil)
+	// 验证密码
+	if !utils.CheckPassword(req.Password, user.Password) {
+		return nil, errors.New(401, "用户名或密码错误", nil)
 	}
 
+	// 生成token
 	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
 	if err != nil {
-		logger.Error("生成令牌失败", zap.Error(err))
-		return nil, fmt.Errorf("生成令牌失败: %w", err)
+		return nil, errors.Wrap(err, "生成token失败")
 	}
 
-	s.db.Model(&user).Update("last_login", time.Now())
-
-	return &LoginResult{
+	// 创建会话
+	session := &model.Session{
+		UserID:    user.ID,
 		Token:     token,
-		User:      &user,
+		IsValid:   true,
+		ExpiredAt: expiredAt,
+	}
+	if err := s.sessionRepo.CreateSession(ctx, session); err != nil {
+		return nil, errors.Wrap(err, "创建会话失败")
+	}
+
+	// 更新最后登录时间
+	if err := s.userRepo.UpdateLastLogin(ctx, user.ID); err != nil {
+		return nil, errors.Wrap(err, "更新登录时间失败")
+	}
+
+	return &dto.LoginResponse{
+		Token:     token,
 		CreatedAt: createdAt,
 		ExpiresIn: expiresIn,
 		ExpiredAt: expiredAt,
+		User: dto.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			Mobile:    user.Mobile,
+			Location:  user.Location,
+			Nickname:  user.Nickname,
+			Bio:       user.Bio,
+			Gender:    user.Gender,
+			Birthday:  user.Birthday,
+			Avatar:    user.Avatar,
+			LastLogin: user.LastLogin,
+		},
 	}, nil
 }
 
-func (s *UserService) ValidateToken(token string) (*TokenValidationResult, error) {
-	var session model.UserSession
-	if err := s.db.Where("token = ?", token).First(&session).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return &TokenValidationResult{IsValid: false}, nil
-		}
-		return nil, fmt.Errorf("验证token失败: %w", err)
+func (s *UserService) GetUserByID(ctx context.Context, id uint) (*dto.UserResponse, error) {
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, errors.New(404, "用户不存在", err)
 	}
 
-	if !session.IsValid || time.Now().After(session.ExpiredAt) {
-		if err := s.db.Model(&session).Update("is_valid", false).Error; err != nil {
-			return nil, fmt.Errorf("更新会话状态失败: %w", err)
-		}
-		return &TokenValidationResult{IsValid: false}, nil
-	}
-
-	var user model.User
-	if err := s.db.First(&user, session.UserID).Error; err != nil {
-		return nil, errors.New(404, "获取用户信息失败", err)
-	}
-
-	return &TokenValidationResult{
-		UserID:   user.ID,
-		Username: user.Username,
-		IsValid:  true,
+	return &dto.UserResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		Mobile:    user.Mobile,
+		Location:  user.Location,
+		Nickname:  user.Nickname,
+		Bio:       user.Bio,
+		Gender:    user.Gender,
+		Birthday:  user.Birthday,
+		Avatar:    user.Avatar,
+		LastLogin: user.LastLogin,
 	}, nil
+}
+
+func (s *UserService) UpdateUser(ctx context.Context, id uint, req *dto.UpdateUserRequest) error {
+	updates := make(map[string]interface{})
+
+	if req.Nickname != "" {
+		updates["nickname"] = req.Nickname
+	}
+	if req.Email != "" {
+		updates["email"] = req.Email
+	}
+	if req.Mobile != "" {
+		updates["mobile"] = req.Mobile
+	}
+	if req.Location != "" {
+		updates["location"] = req.Location
+	}
+	if req.Bio != "" {
+		updates["bio"] = req.Bio
+	}
+	if req.Gender != "" {
+		updates["gender"] = req.Gender
+	}
+	if req.Avatar != "" {
+		updates["avatar"] = req.Avatar
+	}
+
+	return s.userRepo.Update(ctx, id, updates)
+}
+
+func (s *UserService) ChangePassword(ctx context.Context, id uint, req *dto.ChangePasswordRequest) error {
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New(404, "用户不存在", err)
+	}
+
+	// 验证旧密码
+	if !utils.CheckPassword(req.OldPassword, user.Password) {
+		return errors.New(400, "旧密码错误", nil)
+	}
+
+	// 加密新密码
+	hashedPassword, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return errors.Wrap(err, "密码加密失败")
+	}
+
+	return s.userRepo.UpdatePassword(ctx, id, hashedPassword)
+}
+
+func (s *UserService) DeleteUser(ctx context.Context, id uint) error {
+	return s.userRepo.Delete(ctx, id)
 }
 
 func (s *UserService) Logout(ctx context.Context, token string) error {
-	return s.db.Model(&model.UserSession{}).
-		Where("token = ?", token).
-		Update("is_valid", false).Error
+	return s.sessionRepo.InvalidateSession(ctx, token)
 }
 
-func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*model.User, error) {
-	var user model.User
-	if err := s.db.First(&user, userID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New(404, "用户不存在", nil)
-		}
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (s *UserService) UpdateUser(ctx context.Context, id uint, updates map[string]interface{}) error {
-	delete(updates, "id")
-	delete(updates, "password")
-	delete(updates, "created_at")
-	delete(updates, "deleted_at")
-
-	result := s.db.Model(&model.User{}).Where("id = ?", id).Updates(updates)
-	if result.RowsAffected == 0 {
-		return errors.New(404, "用户不存在", nil)
-	}
-	return result.Error
-}
-
-func (s *UserService) DeleteUser(ctx context.Context, userID uint) error {
-	result := s.db.Delete(&model.User{}, userID)
-	if result.RowsAffected == 0 {
-		return errors.New(404, "用户不存在", nil)
-	}
-	return result.Error
-}
-
-func (s *UserService) ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error {
-	var user model.User
-	if err := s.db.First(&user, userID).Error; err != nil {
-		return errors.New(404, "用户不存在", nil)
+// 4. 优化 ValidateToken 方法
+func (s *UserService) ValidateToken(token string) (*TokenValidationResult, error) {
+	if token == "" {
+		return &TokenValidationResult{Valid: false}, nil
 	}
 
-	if !utils.ComparePasswords(user.Password, oldPassword) {
-		return errors.New(401, "原密码错误", nil)
-	}
-
-	if oldPassword == newPassword {
-		return errors.New(400, "新密码不能与原密码相同", nil)
-	}
-
-	hashedPassword, err := utils.HashPassword(newPassword)
+	claims, err := utils.ParseToken(token)
 	if err != nil {
-		return fmt.Errorf("密码加密失败: %w", err)
+		return &TokenValidationResult{Valid: false}, errors.Wrap(err, "无效的token")
 	}
 
-	return s.db.Model(&user).Update("password", hashedPassword).Error
+	ctx := context.Background()
+	session, err := s.sessionRepo.GetSessionByToken(ctx, token)
+	if err != nil {
+		return &TokenValidationResult{Valid: false}, errors.Wrap(err, "会话不存在")
+	}
+
+	if !session.IsValid || time.Now().After(session.ExpiredAt) {
+		return &TokenValidationResult{Valid: false}, nil
+	}
+
+	return &TokenValidationResult{
+		UserID:   claims.UserID,
+		Username: claims.Username,
+		Valid:    true,
+	}, nil
 }

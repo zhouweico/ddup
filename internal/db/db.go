@@ -54,7 +54,8 @@ func InitDB(cfg *config.Config) error {
 	// 自动迁移表结构
 	if err := db.AutoMigrate(
 		&model.User{},
-		&model.UserSession{},
+		&model.Session{},
+		&model.Social{},
 	); err != nil {
 		return fmt.Errorf("数据库迁移失败: %w", err)
 	}

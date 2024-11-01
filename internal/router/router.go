@@ -31,10 +31,12 @@ func SetupRouter() *gin.Engine {
 
 	// 初始化 services
 	userService := service.NewUserService(db.DB)
+	socialService := service.NewSocialService(db.DB)
 
 	// 初始化 handlers
 	userHandler := handler.NewUserHandler(userService)
 	healthHandler := handler.NewHealthHandler()
+	socialHandler := handler.NewSocialHandler(socialService)
 
 	// 健康检查路由（放在 API v1 路由组之外）
 	r.GET("/health", healthHandler.Check)
@@ -56,6 +58,16 @@ func SetupRouter() *gin.Engine {
 			auth.DELETE("/user", userHandler.DeleteUser)
 			auth.PUT("/user/password", userHandler.ChangePassword)
 		}
+	}
+
+	// 添加社交媒体相关路由
+	social := v1.Group("/social")
+	social.Use(middleware.JWTAuth(userService))
+	{
+		social.POST("", socialHandler.CreateSocial)
+		social.GET("", socialHandler.GetUserSocial)
+		social.PUT("/:id", socialHandler.UpdateSocial)
+		social.DELETE("/:id", socialHandler.DeleteSocial)
 	}
 
 	// Swagger API 文档路由

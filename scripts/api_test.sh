@@ -105,7 +105,7 @@ response=$(curl -s -X POST "$API_URL/api/v1/login" \
 
 # 检查登录响应
 if echo "$response" | jq . >/dev/null 2>&1; then
-    TOKEN=$(echo "$response" | jq -r '.data.tokenInfo.token // empty')
+    TOKEN=$(echo "$response" | jq -r '.data.token // empty')
     if [ -z "$TOKEN" ]; then
         echo -e "${RED}警告: 无法获取登录令牌${NC}"
     fi
@@ -117,7 +117,7 @@ fi
 # 更新用户信息测试
 test_api "更新用户信息" "PUT" "/api/v1/user" \
     "{\"nickname\":\"测试用户\",\"email\":\"test@example.com\",\"mobile\":\"18888888888\",\"avatar\":\"https://example.com/avatar.png\",\"bio\":\"测试用户\",\"location\":\"测试地点\",\"website\":\"https://example.com\"}" \
-    200 "更新成功"
+    200 "更新用户信息成功"
 
 # 获取用户信息测试
 test_api "获取用户信息" "GET" "/api/v1/user" "" \
@@ -127,6 +127,47 @@ test_api "获取用户信息" "GET" "/api/v1/user" "" \
 test_api "修改密码" "PUT" "/api/v1/user/password" \
     "{\"oldPassword\":\"$TEST_PASSWORD\",\"newPassword\":\"newpassword123\"}" \
     200 "密码修改成功"
+
+# 创建社交媒体账号测试
+test_api "创建社交媒体账号" "POST" "/api/v1/social" \
+    "{\"platform\":\"github\",\"username\":\"testuser\",\"url\":\"https://github.com/testuser\",\"description\":\"我的 GitHub 账号\"}" \
+    200 "创建成功"
+
+# 创建另一个社交媒体账号
+test_api "创建第二个社交媒体账号" "POST" "/api/v1/social" \
+    "{\"platform\":\"twitter\",\"username\":\"testuser\",\"url\":\"https://twitter.com/testuser\",\"description\":\"我的 Twitter 账号\"}" \
+    200 "创建成功"
+
+# 获取用户的社交媒体账号列表
+test_api "获取社交媒体账号列表" "GET" "/api/v1/social" "" \
+    200 "获取成功"
+
+# 保存第一个社交媒体账号的ID用于后续测试
+response=$(curl -s -X GET "$API_URL/api/v1/social" \
+    -H "Authorization: $TOKEN")
+SOCIAL__ID=$(echo "$response" | jq -r '.data[0].id // empty')
+
+if [ ! -z "$SOCIAL__ID" ]; then
+    # 更新社交媒体账号测试
+    test_api "更新社交媒体账号" "PUT" "/api/v1/social/$SOCIAL__ID" \
+        "{\"platform\":\"github\",\"username\":\"testuser_updated\",\"url\":\"https://github.com/testuser_updated\",\"description\":\"更新后的 GitHub 账号\"}" \
+        200 "更新成功"
+
+    # 删除社交媒体账号测试
+    test_api "删除社交媒体账号" "DELETE" "/api/v1/social/$SOCIAL__ID" "" \
+        200 "删除成功"
+else
+    echo -e "${RED}警告: 无法获取社交媒体账号 ID${NC}"
+fi
+
+# 测试无效的社交媒体账号ID
+test_api "测试无效的社交媒体账号ID" "GET" "/api/v1/social/999999" "" \
+    404 "社交媒体账号不存在"
+
+# 测试创建无效的社交媒体平台
+test_api "创建无效的社交媒体平台" "POST" "/api/v1/social" \
+    "{\"platform\":\"\",\"username\":\"testuser\"}" \
+    400 "无效的请求参数"
 
 # 登出测试
 test_api "登出" "POST" "/api/v1/logout" "" \

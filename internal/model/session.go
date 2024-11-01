@@ -6,14 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserSession struct {
+type Session struct {
+	ID        uint      `gorm:"primaryKey"`
 	UserID    uint      `gorm:"not null;index"`
-	Token     string    `gorm:"type:varchar(255);not null;uniqueIndex"`
+	Token     string    `gorm:"type:varchar(500);not null"`
 	IsValid   bool      `gorm:"not null;default:true"`
 	ExpiredAt time.Time `gorm:"not null"`
 	gorm.Model
-}
-
-func (UserSession) TableName() string {
-	return "user_sessions"
 }

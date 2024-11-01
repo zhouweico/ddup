@@ -25,7 +25,7 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 			return
 		}
 
-		if !result.IsValid {
+		if !result.Valid {
 			c.Error(errors.New(http.StatusUnauthorized, "Token 已失效", nil))
 			c.Abort()
 			return
@@ -33,7 +33,7 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 
 		c.Set("userID", result.UserID)
 		c.Set("username", result.Username)
-		c.Set("IsValid", result.IsValid)
+		c.Set("Valid", result.Valid)
 		c.Next()
 	}
 }

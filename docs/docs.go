@@ -58,7 +58,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
+                            "$ref": "#/definitions/dto.LoginRequest"
                         }
                     }
                 ],
@@ -74,7 +74,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.LoginResponse"
+                                            "$ref": "#/definitions/dto.LoginResponse"
                                         }
                                     }
                                 }
@@ -83,12 +83,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "无效的请求参数",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "用户名或密码错误",
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
@@ -104,13 +98,10 @@ const docTemplate = `{
                     }
                 ],
                 "description": "用户退出登录",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "用户退出",
+                "summary": "退出登录",
                 "responses": {
                     "200": {
                         "description": "退出成功",
@@ -144,13 +135,41 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRequest"
+                            "$ref": "#/definitions/dto.RegisterRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "注册成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "无效的请求参数",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/social-": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取当前用户的所有社交媒体账号",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取社交媒体账号列表",
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -160,15 +179,118 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.RegisterResponse"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SocialResponse"
+                                            }
                                         }
                                     }
                                 }
                             ]
                         }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "为当前用户创建社交媒体账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "创建社交媒体账号",
+                "parameters": [
+                    {
+                        "description": "社交媒体账号信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SocialRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/social-/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新指定的社交媒体账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "更新社交媒体账号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "社交媒体账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     },
-                    "400": {
-                        "description": "无效的请求参数",
+                    {
+                        "description": "社交媒体账号信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SocialRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "删除指定的社交媒体账号",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "删除社交媒体账号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "社交媒体账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
@@ -183,14 +305,11 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "获取用户详细信息（仅允许获取自己的信息）",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "获取当前登录用户信息",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "获取用户详情",
+                "summary": "获取用户信息",
                 "responses": {
                     "200": {
                         "description": "获取成功",
@@ -203,7 +322,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.UserDetailResponse"
+                                            "$ref": "#/definitions/dto.UserResponse"
                                         }
                                     }
                                 }
@@ -212,12 +331,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "未授权",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "禁止访问",
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
@@ -245,7 +358,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateUserRequest"
+                            "$ref": "#/definitions/dto.UpdateUserRequest"
                         }
                     }
                 ],
@@ -276,10 +389,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "软除用户账号",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "删除用户账号",
                 "produces": [
                     "application/json"
                 ],
@@ -296,12 +406,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
-                    },
-                    "500": {
-                        "description": "系统错误",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
                     }
                 }
             }
@@ -313,7 +417,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "用户修改密码",
+                "description": "修改用户密码",
                 "consumes": [
                     "application/json"
                 ],
@@ -323,24 +427,24 @@ const docTemplate = `{
                 "summary": "修改密码",
                 "parameters": [
                     {
-                        "description": "修改密码请求",
+                        "description": "密码信息",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ChangePasswordRequest"
+                            "$ref": "#/definitions/dto.ChangePasswordRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "密码修改成功",
+                        "description": "修改成功",
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
                     },
                     "400": {
-                        "description": "请求参数错误",
+                        "description": "无效的请求参数",
                         "schema": {
                             "$ref": "#/definitions/handler.Response"
                         }
@@ -356,7 +460,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.ChangePasswordRequest": {
+        "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "newPassword",
@@ -373,7 +477,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginRequest": {
+        "dto.LoginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -388,28 +492,27 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginResponse": {
+        "dto.LoginResponse": {
             "type": "object",
             "properties": {
-                "tokenInfo": {
-                    "description": "Token信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/handler.TokenInfo"
-                        }
-                    ]
+                "createdAt": {
+                    "type": "string"
                 },
-                "userInfo": {
-                    "description": "用户信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/handler.User"
-                        }
-                    ]
+                "expiredAt": {
+                    "type": "string"
+                },
+                "expiresIn": {
+                    "type": "integer"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.UserResponse"
                 }
             }
         },
-        "handler.RegisterRequest": {
+        "dto.RegisterRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -428,98 +531,33 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "userInfo": {
-                    "description": "用户信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/handler.User"
-                        }
-                    ]
-                }
-            }
-        },
-        "handler.Response": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应码",
-                    "type": "integer"
-                },
-                "data": {
-                    "description": "响应数据"
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string"
-                }
-            }
-        },
-        "handler.TokenInfo": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "expiredAt": {
-                    "description": "过期时间",
-                    "type": "string"
-                },
-                "expiresIn": {
-                    "description": "有效时长(秒)",
-                    "type": "integer"
-                },
-                "token": {
-                    "description": "JWT token",
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UpdateUserRequest": {
+        "dto.UpdateUserRequest": {
             "type": "object",
             "properties": {
                 "avatar": {
-                    "description": "头像URL",
                     "type": "string"
                 },
                 "bio": {
-                    "description": "用户简介",
                     "type": "string"
                 },
                 "email": {
-                    "description": "邮箱",
                     "type": "string"
                 },
                 "gender": {
-                    "description": "性别",
                     "type": "string"
                 },
                 "location": {
-                    "description": "位置",
                     "type": "string"
                 },
                 "mobile": {
-                    "description": "手机号",
                     "type": "string"
                 },
                 "nickname": {
-                    "description": "用户昵称",
                     "type": "string"
                 }
             }
         },
-        "handler.User": {
-            "type": "object",
-            "properties": {
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UserDetailResponse": {
+        "dto.UserResponse": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -544,11 +582,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "location": {
-                    "description": "位置",
                     "type": "string"
                 },
                 "mobile": {
-                    "description": "手机号",
                     "type": "string"
                 },
                 "nickname": {
@@ -556,6 +592,70 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SocialRequest": {
+            "type": "object",
+            "required": [
+                "platform",
+                "username"
+            ],
+            "properties": {
+                "description": {
+                    "description": "描述",
+                    "type": "string"
+                },
+                "platform": {
+                    "description": "平台名称",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "个人主页链接",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "平台用户名",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SocialResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
                 }
             }
         }
