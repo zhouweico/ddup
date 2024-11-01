@@ -8,6 +8,13 @@ import (
 	"go.uber.org/zap"
 )
 
+var healthStatus = true
+
+// IsHealthy 返回当前的健康状态
+func IsHealthy() bool {
+	return healthStatus
+}
+
 func PeriodicHealthCheck(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {

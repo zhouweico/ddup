@@ -18,7 +18,7 @@ func JWTAuth(userService service.IUserService) gin.HandlerFunc {
 			return
 		}
 
-		result, err := userService.ValidateToken(c.Request.Context(), token)
+		result, err := userService.ValidateToken(token)
 		if err != nil {
 			c.Error(errors.Wrap(err, "Token 验证失败"))
 			c.Abort()

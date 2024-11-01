@@ -17,9 +17,8 @@ import (
 type IUserService interface {
 	Register(ctx context.Context, username, password string) error
 	Login(ctx context.Context, username, password string) (*LoginResult, error)
-	ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error)
+	ValidateToken(token string) (*TokenValidationResult, error)
 	Logout(ctx context.Context, token string) error
-	GetUsers(ctx context.Context, page, pageSize int) ([]model.User, int64, error)
 	GetUserByID(ctx context.Context, userID uint) (*model.User, error)
 	ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
 	UpdateUser(ctx context.Context, userID uint, updates map[string]interface{}) error
@@ -109,7 +108,7 @@ func (s *UserService) Login(ctx context.Context, username, password string) (*Lo
 	}, nil
 }
 
-func (s *UserService) ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error) {
+func (s *UserService) ValidateToken(token string) (*TokenValidationResult, error) {
 	var session model.UserSession
 	if err := s.db.Where("token = ?", token).First(&session).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -141,24 +140,6 @@ func (s *UserService) Logout(ctx context.Context, token string) error {
 	return s.db.Model(&model.UserSession{}).
 		Where("token = ?", token).
 		Update("is_valid", false).Error
-}
-
-func (s *UserService) GetUsers(ctx context.Context, page, pageSize int) ([]model.User, int64, error) {
-	var users []model.User
-	var total int64
-
-	result := s.db.Model(&model.User{}).Count(&total)
-	if result.Error != nil {
-		return nil, 0, result.Error
-	}
-
-	offset := (page - 1) * pageSize
-	result = s.db.Offset(offset).Limit(pageSize).Find(&users)
-	if result.Error != nil {
-		return nil, 0, result.Error
-	}
-
-	return users, total, nil
 }
 
 func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*model.User, error) {
