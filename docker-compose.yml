@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     image: ddup-apis:latest
@@ -22,6 +20,8 @@ services:
   postgres:
     image: postgres:17.0
     container_name: ddup-postgres
+    env_file:
+      - .env
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -47,4 +47,4 @@ volumes:
 
 networks:
   ddup-network:
-    name: ddup-network
+    name: ddup-network 

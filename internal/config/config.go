@@ -42,6 +42,10 @@ type Config struct {
 		MaxAge     int           `mapstructure:"max_age"`
 		Compress   bool          `mapstructure:"compress"`
 	}
+	Swagger struct {
+		Host    string   `mapstructure:"host"`
+		Schemes []string `mapstructure:"schemes"`
+	}
 }
 
 var globalConfig Config
@@ -102,6 +106,10 @@ func LoadConfig() (*Config, error) {
 	config.Log.MaxBackups = viper.GetInt("LOG_MAX_BACKUPS")
 	config.Log.MaxAge = viper.GetInt("LOG_MAX_AGE")
 	config.Log.Compress = viper.GetBool("LOG_COMPRESS")
+
+	// Swagger 配置
+	config.Swagger.Host = viper.GetString("SWAGGER_HOST")
+	config.Swagger.Schemes = viper.GetStringSlice("SWAGGER_SCHEMES")
 
 	// 验证配置
 	if err := validateConfig(&config); err != nil {

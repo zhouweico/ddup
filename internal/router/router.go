@@ -1,6 +1,8 @@
 package router
 
 import (
+	"ddup-apis/docs"
+	"ddup-apis/internal/config"
 	"ddup-apis/internal/db"
 	"ddup-apis/internal/handler"
 	"ddup-apis/internal/middleware"
@@ -15,6 +17,11 @@ import (
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+
+	// 设置 Swagger 信息
+	cfg := config.GetConfig()
+	docs.SwaggerInfo.Host = cfg.Swagger.Host
+	docs.SwaggerInfo.Schemes = cfg.Swagger.Schemes
 
 	// 添加全局中间件
 	r.Use(middleware.Logger())
@@ -51,7 +58,7 @@ func SetupRouter() *gin.Engine {
 	// 健康检查路由
 	r.GET("/health", healthHandler.Check)
 
-	// Swagger 文档路由
+	// Swagger API 文档路由
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r

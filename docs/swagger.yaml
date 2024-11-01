@@ -136,7 +136,6 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: DDUP 服务 API 文档
