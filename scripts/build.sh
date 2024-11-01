@@ -8,6 +8,11 @@ IMAGE_NAME="ddup-apis"
 echo "生成 Swagger 文档..."
 swag init -g cmd/api/main.go -o docs
 
+# 清理旧镜像
+echo "清理旧镜像..."
+docker rmi ${IMAGE_NAME}:latest >/dev/null 2>&1 || true
+docker rmi ${IMAGE_NAME}:${VERSION} >/dev/null 2>&1 || true
+
 # 构建 Docker 镜像
 echo "构建 Docker 镜像..."
 docker build -t ${IMAGE_NAME}:${VERSION} .

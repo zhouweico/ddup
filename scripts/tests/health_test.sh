@@ -14,12 +14,18 @@ run_health_tests() {
     local status=$(echo "$health_response" | jq -r '.code')
     local message=$(echo "$health_response" | jq -r '.message')
     
+    # 确保 status 是数字
+    if [[ ! "$status" =~ ^[0-9]+$ ]]; then
+        log_error "无效的状态码: $status"
+        return 1
+    fi
+    
     if [ "$status" -eq 200 ] && [ "$message" = "服务正常" ]; then
         log_success "健康检查测试通过"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         return 0
     else
-        log_error "健康检查测试失败"
+        log_error "健康检查测试失败: status=$status, message=$message"
         return 1
     fi
     
