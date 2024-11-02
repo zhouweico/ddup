@@ -323,7 +323,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 组织列表
           schema:
             allOf:
             - $ref: '#/definitions/handler.Response'
@@ -353,12 +353,7 @@ paths:
         "200":
           description: OK
           schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.OrganizationResponse'
-              type: object
+            $ref: '#/definitions/handler.Response'
       security:
       - Bearer: []
       summary: 创建组织

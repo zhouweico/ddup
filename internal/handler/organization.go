@@ -23,7 +23,7 @@ func NewOrganizationHandler(service *service.OrganizationService, userService *s
 // @Produce json
 // @Security Bearer
 // @Param request body dto.CreateOrganizationRequest true "组织信息"
-// @Success 200 {object} Response{data=dto.OrganizationResponse}
+// @Success 200 {object} Response
 // @Router /api/v1/organizations [post]
 func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	var req dto.CreateOrganizationRequest
@@ -46,7 +46,7 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 // @Description 获取当前用户所属的所有组织
 // @Produce json
 // @Security Bearer
-// @Success 200 {object} Response{data=[]dto.OrganizationResponse}
+// @Success 200 {object} Response{data=[]dto.OrganizationResponse} "组织列表"
 // @Router /api/v1/organizations [get]
 func (h *OrganizationHandler) GetUserOrganization(c *gin.Context) {
 	userID := c.GetUint("userID")

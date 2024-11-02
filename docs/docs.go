@@ -143,7 +143,7 @@ const docTemplate = `{
                 "summary": "获取用户组织列表",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "组织列表",
                         "schema": {
                             "allOf": [
                                 {
@@ -194,19 +194,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handler.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.OrganizationResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/handler.Response"
                         }
                     }
                 }
