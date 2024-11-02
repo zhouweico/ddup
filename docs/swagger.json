@@ -1006,9 +1006,6 @@
                 "email": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "location": {
                     "type": "string"
                 },
@@ -1131,9 +1128,6 @@
                 },
                 "gender": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "lastLogin": {
                     "type": "string"

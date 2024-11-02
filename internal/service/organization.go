@@ -79,7 +79,6 @@ func (s *OrganizationService) GetUserOrganizations(ctx context.Context, userID u
 		}
 
 		resp = append(resp, dto.OrganizationResponse{
-			ID:          org.ID,
 			Name:        org.Name,
 			DisplayName: org.DisplayName,
 			Email:       org.Email,

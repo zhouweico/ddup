@@ -23,7 +23,6 @@ type UpdateOrganizationRequest struct {
 }
 
 type OrganizationResponse struct {
-	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	DisplayName string `json:"display_name"`
 	Email       string `json:"email"`

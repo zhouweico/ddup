@@ -1013,9 +1013,6 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "location": {
                     "type": "string"
                 },
@@ -1138,9 +1135,6 @@ const docTemplate = `{
                 },
                 "gender": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "lastLogin": {
                     "type": "string"

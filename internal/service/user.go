@@ -126,7 +126,6 @@ func (s *UserService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		ExpiresIn: expiresIn,
 		ExpiredAt: expiredAt,
 		User: dto.UserResponse{
-			ID:        user.ID,
 			Username:  user.Username,
 			Email:     user.Email,
 			Mobile:    user.Mobile,
@@ -148,7 +147,6 @@ func (s *UserService) GetUserByID(ctx context.Context, id uint) (*dto.UserRespon
 	}
 
 	return &dto.UserResponse{
-		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
 		Mobile:    user.Mobile,

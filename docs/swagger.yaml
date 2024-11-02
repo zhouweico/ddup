@@ -97,8 +97,6 @@ definitions:
         type: string
       email:
         type: string
-      id:
-        type: integer
       location:
         type: string
       name:
@@ -183,8 +181,6 @@ definitions:
         type: string
       gender:
         type: string
-      id:
-        type: integer
       lastLogin:
         type: string
       location:
