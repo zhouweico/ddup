@@ -16,6 +16,7 @@ func NewUserHandler(userService service.IUserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
+// @Tags 认证
 // @Summary 用户注册
 // @Description 用户注册
 // @Accept json
@@ -39,6 +40,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	SendSuccess(c, "注册成功", nil)
 }
 
+// @Tags 认证
 // @Summary 用户登录
 // @Description 用户登录
 // @Accept json
@@ -63,6 +65,30 @@ func (h *UserHandler) Login(c *gin.Context) {
 	SendSuccess(c, "登录成功", resp)
 }
 
+// @Tags 认证
+// @Summary 退出登录
+// @Description 用户退出登录
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} Response "退出成功"
+// @Failure 401 {object} Response "未授权"
+// @Router /api/v1/auth/logout [post]
+func (h *UserHandler) Logout(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	if token == "" {
+		SendError(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+
+	if err := h.userService.Logout(c.Request.Context(), token); err != nil {
+		SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	SendSuccess(c, "退出成功", nil)
+}
+
+// @Tags 用户
 // @Summary 获取用户信息
 // @Description 获取当前登录用户信息
 // @Produce json
@@ -86,6 +112,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	SendSuccess(c, "获取成功", user)
 }
 
+// @Tags 用户
 // @Summary 更新用户信息
 // @Description 更新用户基本信息
 // @Accept json
@@ -117,6 +144,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	SendSuccess(c, "更新用户信息成功", nil)
 }
 
+// @Tags 用户
 // @Summary 修改密码
 // @Description 修改用户密码
 // @Accept json
@@ -148,28 +176,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	SendSuccess(c, "密码修改成功", nil)
 }
 
-// @Summary 退出登录
-// @Description 用户退出登录
-// @Produce json
-// @Security Bearer
-// @Success 200 {object} Response "退出成功"
-// @Failure 401 {object} Response "未授权"
-// @Router /api/v1/auth/logout [post]
-func (h *UserHandler) Logout(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		SendError(c, http.StatusUnauthorized, "未授权")
-		return
-	}
-
-	if err := h.userService.Logout(c.Request.Context(), token); err != nil {
-		SendError(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	SendSuccess(c, "退出成功", nil)
-}
-
+// @Tags 用户
 // @Summary 删除用户
 // @Description 删除用户账号
 // @Produce json

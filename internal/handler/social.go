@@ -37,6 +37,7 @@ func NewSocialHandler(service *service.SocialService) *SocialHandler {
 }
 
 // CreateSocial 创建社交媒体账号
+// @Tags 社交媒体
 // @Summary 创建社交媒体账号
 // @Description 为当前用户创建社交媒体账号
 // @Accept json
@@ -75,6 +76,7 @@ func (h *SocialHandler) CreateSocial(c *gin.Context) {
 }
 
 // GetUserSocial 获取用户的社交媒体账号列表
+// @Tags 社交媒体
 // @Summary 获取社交媒体账号列表
 // @Description 获取当前用户的所有社交媒体账号
 // @Produce json
@@ -109,6 +111,7 @@ func (h *SocialHandler) GetUserSocial(c *gin.Context) {
 }
 
 // UpdateSocial 更新社交媒体账号
+// @Tags 社交媒体
 // @Summary 更新社交媒体账号
 // @Description 更新指定的社交媒体账号
 // @Accept json
@@ -147,6 +150,7 @@ func (h *SocialHandler) UpdateSocial(c *gin.Context) {
 }
 
 // DeleteSocial 删除社交媒体账号
+// @Tags 社交媒体
 // @Summary 删除社交媒体账号
 // @Description 删除指定的社交媒体账号
 // @Produce json

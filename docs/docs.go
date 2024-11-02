@@ -24,6 +24,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "认证"
+                ],
                 "summary": "用户登录",
                 "parameters": [
                     {
@@ -75,6 +78,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "认证"
+                ],
                 "summary": "退出登录",
                 "responses": {
                     "200": {
@@ -100,6 +106,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "认证"
                 ],
                 "summary": "用户注册",
                 "parameters": [
@@ -140,6 +149,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "组织"
+                ],
                 "summary": "获取用户组织列表",
                 "responses": {
                     "200": {
@@ -178,6 +190,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "组织"
+                ],
                 "summary": "创建组织",
                 "parameters": [
                     {
@@ -213,6 +228,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "组织"
                 ],
                 "summary": "更新组织信息",
                 "parameters": [
@@ -252,6 +270,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "组织"
+                ],
                 "summary": "删除组织",
                 "parameters": [
                     {
@@ -286,6 +307,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "组织成员"
+                ],
                 "summary": "加入组织",
                 "parameters": [
                     {
@@ -316,6 +340,9 @@ const docTemplate = `{
                 "description": "获取组织的所有成员",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "组织成员"
                 ],
                 "summary": "获取组织成员列表",
                 "parameters": [
@@ -364,6 +391,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "组织成员"
+                ],
                 "summary": "添加组织成员",
                 "parameters": [
                     {
@@ -406,6 +436,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "组织成员"
                 ],
                 "summary": "更新组织成员",
                 "parameters": [
@@ -452,6 +485,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "组织成员"
+                ],
                 "summary": "移除组织成员",
                 "parameters": [
                     {
@@ -489,6 +525,9 @@ const docTemplate = `{
                 "description": "获取当前登录用户信息",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "用户"
                 ],
                 "summary": "获取用户信息",
                 "responses": {
@@ -530,6 +569,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "用户"
                 ],
                 "summary": "更新用户信息",
                 "parameters": [
@@ -574,6 +616,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "用户"
+                ],
                 "summary": "删除用户",
                 "responses": {
                     "200": {
@@ -604,6 +649,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "用户"
                 ],
                 "summary": "修改密码",
                 "parameters": [
@@ -650,6 +698,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "社交媒体"
+                ],
                 "summary": "获取社交媒体账号列表",
                 "responses": {
                     "200": {
@@ -688,6 +739,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "社交媒体"
+                ],
                 "summary": "创建社交媒体账号",
                 "parameters": [
                     {
@@ -723,6 +777,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "社交媒体"
                 ],
                 "summary": "更新社交媒体账号",
                 "parameters": [
@@ -761,6 +818,9 @@ const docTemplate = `{
                 "description": "删除指定的社交媒体账号",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "社交媒体"
                 ],
                 "summary": "删除社交媒体账号",
                 "parameters": [

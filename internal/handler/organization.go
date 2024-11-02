@@ -17,6 +17,7 @@ func NewOrganizationHandler(service *service.OrganizationService, userService *s
 	return &OrganizationHandler{service: service, userService: userService}
 }
 
+// @Tags 组织
 // @Summary 创建组织
 // @Description 创建新的组织，创建者默认成为管理员
 // @Accept json
@@ -42,6 +43,7 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	SendSuccess(c, "创建组织成功", nil)
 }
 
+// @Tags 组织
 // @Summary 获取用户组织列表
 // @Description 获取当前用户所属的所有组织
 // @Produce json
@@ -59,6 +61,7 @@ func (h *OrganizationHandler) GetUserOrganization(c *gin.Context) {
 	SendSuccess(c, "获取组织列表成功", orgs)
 }
 
+// @Tags 组织
 // @Summary 更新组织信息
 // @Description 更新组织基本信息（仅管理员可操作）
 // @Accept json
@@ -106,6 +109,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 	SendSuccess(c, "更新组织信息成功", nil)
 }
 
+// @Tags 组织
 // @Summary 删除组织
 // @Description 删除组织（仅管理员可操作）
 // @Produce json
@@ -145,6 +149,7 @@ func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
 	SendSuccess(c, "删除组织成功", nil)
 }
 
+// @Tags 组织成员
 // @Summary 加入组织
 // @Description 加入已存在的组织
 // @Accept json
@@ -178,6 +183,7 @@ func (h *OrganizationHandler) JoinOrganization(c *gin.Context) {
 	SendSuccess(c, "加入组织成功", nil)
 }
 
+// @Tags 组织成员
 // @Summary 添加组织成员
 // @Description 添加新成员到组织（仅管理员可操作）
 // @Accept json
@@ -225,6 +231,7 @@ func (h *OrganizationHandler) AddOrganizationMember(c *gin.Context) {
 	SendSuccess(c, "添加成员成功", nil)
 }
 
+// @Tags 组织成员
 // @Summary 获取组织成员列表
 // @Description 获取组织的所有成员
 // @Produce json
@@ -257,6 +264,7 @@ func (h *OrganizationHandler) GetOrganizationMembers(c *gin.Context) {
 	SendSuccess(c, "获取成员列表成功", members)
 }
 
+// @Tags 组织成员
 // @Summary 更新组织成员
 // @Description 更新组织成员信息（仅管理员可操作）
 // @Accept json
@@ -306,6 +314,7 @@ func (h *OrganizationHandler) UpdateOrganizationMember(c *gin.Context) {
 	SendSuccess(c, "更新成员信息成功", nil)
 }
 
+// @Tags 组织成员
 // @Summary 移除组织成员
 // @Description 从组织中移除成员（仅管理员可操作）
 // @Produce json
