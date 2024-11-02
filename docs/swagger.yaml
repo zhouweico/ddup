@@ -49,6 +49,45 @@ definitions:
     - display_name
     - name
     type: object
+  dto.CreateProfileRequest:
+    properties:
+      description:
+        example: 这是一段描述
+        type: string
+      end_date:
+        example: "2024-06-30T00:00:00Z"
+        type: string
+      location:
+        example: 北京
+        type: string
+      metadata:
+        example: '{"degree":"学士"}'
+        type: string
+      organization:
+        example: 测试大学
+        type: string
+      start_date:
+        example: "2020-09-01T00:00:00Z"
+        type: string
+      title:
+        example: 测试大学
+        type: string
+      type:
+        example: education
+        type: string
+      url:
+        example: https://example.com
+        type: string
+      visibility:
+        example: public
+        type: string
+      year:
+        example: 2020
+        type: integer
+    required:
+    - title
+    - type
+    type: object
   dto.LoginRequest:
     properties:
       password:
@@ -107,6 +146,52 @@ definitions:
       website:
         type: string
     type: object
+  dto.ProfileResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        example: 这是一段描述
+        type: string
+      display_order:
+        example: 0
+        type: integer
+      end_date:
+        example: "2024-06-30T00:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      location:
+        example: 北京
+        type: string
+      metadata:
+        example: '{"degree":"学士"}'
+        type: string
+      organization:
+        example: 测试大学
+        type: string
+      start_date:
+        example: "2020-09-01T00:00:00Z"
+        type: string
+      title:
+        example: 测试大学
+        type: string
+      type:
+        example: education
+        type: string
+      updated_at:
+        type: string
+      url:
+        example: https://example.com
+        type: string
+      visibility:
+        example: public
+        type: string
+      year:
+        example: 2020
+        type: integer
+    type: object
   dto.RegisterRequest:
     properties:
       password:
@@ -120,6 +205,20 @@ definitions:
     required:
     - password
     - username
+    type: object
+  dto.UpdateDisplayOrderRequest:
+    properties:
+      items:
+        items:
+          properties:
+            id:
+              type: integer
+            order:
+              type: integer
+          type: object
+        type: array
+    required:
+    - items
     type: object
   dto.UpdateMemberRequest:
     properties:
@@ -151,6 +250,8 @@ definitions:
         type: string
       website:
         type: string
+    type: object
+  dto.UpdateProfileRequest:
     type: object
   dto.UpdateUserRequest:
     properties:
@@ -550,6 +651,130 @@ paths:
       summary: 更新组织成员
       tags:
       - 组织成员
+  /api/v1/profiles:
+    get:
+      description: 获取指定类型的个人资料列表
+      parameters:
+      - description: 资料类型
+        in: query
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.ProfileResponse'
+                  type: array
+              type: object
+      security:
+      - Bearer: []
+      summary: 获取个人资料列表
+      tags:
+      - 个人资料
+    post:
+      consumes:
+      - application/json
+      description: 创建新的个人资料项
+      parameters:
+      - description: 个人资料信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 创建个人资料项
+      tags:
+      - 个人资料
+  /api/v1/profiles/{id}:
+    delete:
+      description: 删除指定的个人资料项
+      parameters:
+      - description: 资料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 删除个人资料
+      tags:
+      - 个人资料
+    put:
+      consumes:
+      - application/json
+      description: 更新指定的个人资料项
+      parameters:
+      - description: 资料ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 更新个人资料
+      tags:
+      - 个人资料
+  /api/v1/profiles/display-order:
+    put:
+      consumes:
+      - application/json
+      description: 更新个人资料项的显示顺序
+      parameters:
+      - description: 顺序信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDisplayOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - Bearer: []
+      summary: 更新显示顺序
+      tags:
+      - 个人资料
   /api/v1/users:
     delete:
       description: 删除用户账号

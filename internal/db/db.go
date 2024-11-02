@@ -56,6 +56,7 @@ func InitDB(cfg *config.Config) error {
 		&model.User{},
 		&model.Session{},
 		&model.Social{},
+		&model.Profile{},
 		&model.Organization{},
 		&model.OrganizationMember{},
 	); err != nil {

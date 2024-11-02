@@ -12,6 +12,7 @@ source "${PROJECT_ROOT}/scripts/tests/health_test.sh"
 source "${PROJECT_ROOT}/scripts/tests/auth_test.sh"
 source "${PROJECT_ROOT}/scripts/tests/user_test.sh"
 source "${PROJECT_ROOT}/scripts/tests/social_test.sh"
+source "${PROJECT_ROOT}/scripts/tests/profile_test.sh"
 source "${PROJECT_ROOT}/scripts/tests/organization_test.sh"
 
 # 检查必要的命令是否存在
@@ -45,6 +46,7 @@ main() {
     if [ -n "$TOKEN" ]; then
         run_user_tests
         run_social_tests
+        run_profile_tests
         run_organization_tests
         # 最后运行登出测试
         run_logout_test

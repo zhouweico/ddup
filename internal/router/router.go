@@ -29,11 +29,13 @@ func SetupRouter() *gin.Engine {
 
 	// 初始化 services
 	userService := service.NewUserService(db.DB)
+	profileService := service.NewProfileService(db.DB)
 	socialService := service.NewSocialService(db.DB)
 	organizationService := service.NewOrganizationService(db.DB)
 
 	// 初始化 handlers
 	userHandler := handler.NewUserHandler(userService)
+	profileHandler := handler.NewProfileHandler(profileService)
 	healthHandler := handler.NewHealthHandler()
 	socialHandler := handler.NewSocialHandler(socialService)
 	organizationHandler := handler.NewOrganizationHandler(organizationService, userService)
@@ -70,6 +72,16 @@ func SetupRouter() *gin.Engine {
 				socials.PUT("/:id", socialHandler.UpdateSocial)
 				socials.DELETE("/:id", socialHandler.DeleteSocial)
 			}
+		}
+
+		profiles := v1.Group("/profiles")
+		profiles.Use(middleware.JWTAuth(userService))
+		{
+			profiles.POST("", profileHandler.CreateProfile)           // 创建个人资料项
+			profiles.GET("", profileHandler.GetProfiles)              // 获取个人资料列表（支持按类型筛选）
+			profiles.PUT("/:id", profileHandler.UpdateProfile)        // 更新个人资料项
+			profiles.DELETE("/:id", profileHandler.DeleteProfile)     // 删除个人资料项
+			profiles.PUT("/order", profileHandler.UpdateDisplayOrder) // 更新显示顺序
 		}
 
 		// 组织相关路由

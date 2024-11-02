@@ -508,6 +508,209 @@
                 }
             }
         },
+        "/api/v1/profiles": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "获取指定类型的个人资料列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料"
+                ],
+                "summary": "获取个人资料列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "资料类型",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.ProfileResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "创建新的个人资料项",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料"
+                ],
+                "summary": "创建个人资料项",
+                "parameters": [
+                    {
+                        "description": "个人资料信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profiles/display-order": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新个人资料项的显示顺序",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料"
+                ],
+                "summary": "更新显示顺序",
+                "parameters": [
+                    {
+                        "description": "顺序信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateDisplayOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profiles/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "更新指定的个人资料项",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料"
+                ],
+                "summary": "更新个人资料",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "资料ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "删除指定的个人资料项",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料"
+                ],
+                "summary": "删除个人资料",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "资料ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users": {
             "get": {
                 "security": [
@@ -933,6 +1136,59 @@
                 }
             }
         },
+        "dto.CreateProfileRequest": {
+            "type": "object",
+            "required": [
+                "title",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "这是一段描述"
+                },
+                "end_date": {
+                    "type": "string",
+                    "example": "2024-06-30T00:00:00Z"
+                },
+                "location": {
+                    "type": "string",
+                    "example": "北京"
+                },
+                "metadata": {
+                    "type": "string",
+                    "example": "{\"degree\":\"学士\"}"
+                },
+                "organization": {
+                    "type": "string",
+                    "example": "测试大学"
+                },
+                "start_date": {
+                    "type": "string",
+                    "example": "2020-09-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "测试大学"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "education"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com"
+                },
+                "visibility": {
+                    "type": "string",
+                    "example": "public"
+                },
+                "year": {
+                    "type": "integer",
+                    "example": 2020
+                }
+            }
+        },
         "dto.LoginRequest": {
             "type": "object",
             "required": [
@@ -1021,6 +1277,69 @@
                 }
             }
         },
+        "dto.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "这是一段描述"
+                },
+                "display_order": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "end_date": {
+                    "type": "string",
+                    "example": "2024-06-30T00:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "location": {
+                    "type": "string",
+                    "example": "北京"
+                },
+                "metadata": {
+                    "type": "string",
+                    "example": "{\"degree\":\"学士\"}"
+                },
+                "organization": {
+                    "type": "string",
+                    "example": "测试大学"
+                },
+                "start_date": {
+                    "type": "string",
+                    "example": "2020-09-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "测试大学"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "education"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com"
+                },
+                "visibility": {
+                    "type": "string",
+                    "example": "public"
+                },
+                "year": {
+                    "type": "integer",
+                    "example": 2020
+                }
+            }
+        },
         "dto.RegisterRequest": {
             "type": "object",
             "required": [
@@ -1037,6 +1356,28 @@
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 3
+                }
+            }
+        },
+        "dto.UpdateDisplayOrderRequest": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "order": {
+                                "type": "integer"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -1084,6 +1425,9 @@
                     "type": "string"
                 }
             }
+        },
+        "dto.UpdateProfileRequest": {
+            "type": "object"
         },
         "dto.UpdateUserRequest": {
             "type": "object",
