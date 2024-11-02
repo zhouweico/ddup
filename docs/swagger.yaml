@@ -1,17 +1,17 @@
 basePath: /api/v1
 definitions:
-  dto.AddMemberRequest:
+  dto.AddOrganizationMemberRequest:
     properties:
       role:
         enum:
         - admin
         - member
         type: string
-      user_id:
-        type: integer
+      username:
+        type: string
     required:
     - role
-    - user_id
+    - username
     type: object
   dto.ChangePasswordRequest:
     properties:
@@ -31,6 +31,10 @@ definitions:
         type: string
       description:
         type: string
+      display_name:
+        maxLength: 100
+        minLength: 2
+        type: string
       email:
         type: string
       location:
@@ -42,14 +46,8 @@ definitions:
       website:
         type: string
     required:
+    - display_name
     - name
-    type: object
-  dto.JoinOrganizationRequest:
-    properties:
-      organization_id:
-        type: integer
-    required:
-    - organization_id
     type: object
   dto.LoginRequest:
     properties:
@@ -78,14 +76,14 @@ definitions:
     properties:
       avatar:
         type: string
-      created_at:
+      email:
+        type: string
+      joined_at:
         type: string
       nickname:
         type: string
       role:
         type: string
-      user_id:
-        type: integer
       username:
         type: string
     type: object
@@ -94,6 +92,8 @@ definitions:
       avatar:
         type: string
       description:
+        type: string
+      display_name:
         type: string
       email:
         type: string
@@ -138,6 +138,10 @@ definitions:
       avatar:
         type: string
       description:
+        type: string
+      display_name:
+        maxLength: 100
+        minLength: 2
         type: string
       email:
         type: string
@@ -358,15 +362,15 @@ paths:
       security:
       - Bearer: []
       summary: 创建组织
-  /api/v1/organizations/{id}:
+  /api/v1/organizations/{org_name}:
     delete:
       description: 删除组织（仅管理员可操作）
       parameters:
-      - description: 组织ID
+      - description: 组织名称
         in: path
-        name: id
+        name: org_name
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -382,11 +386,11 @@ paths:
       - application/json
       description: 更新组织基本信息（仅管理员可操作）
       parameters:
-      - description: 组织ID
+      - description: 组织名称
         in: path
-        name: id
+        name: org_name
         required: true
-        type: integer
+        type: string
       - description: 更新信息
         in: body
         name: request
@@ -403,18 +407,17 @@ paths:
       security:
       - Bearer: []
       summary: 更新组织信息
-  /api/v1/organizations/{id}/join:
+  /api/v1/organizations/{org_name}/join:
     post:
       consumes:
       - application/json
       description: 加入已存在的组织
       parameters:
-      - description: 组织ID
-        in: body
-        name: request
+      - description: 组织名称
+        in: path
+        name: org_name
         required: true
-        schema:
-          $ref: '#/definitions/dto.JoinOrganizationRequest'
+        type: string
       produces:
       - application/json
       responses:
@@ -425,15 +428,15 @@ paths:
       security:
       - Bearer: []
       summary: 加入组织
-  /api/v1/organizations/{id}/members:
+  /api/v1/organizations/{org_name}/members:
     get:
       description: 获取组织的所有成员
       parameters:
-      - description: 组织ID
+      - description: 组织名称
         in: path
-        name: id
+        name: org_name
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -456,17 +459,17 @@ paths:
       - application/json
       description: 添加新成员到组织（仅管理员可操作）
       parameters:
-      - description: 组织ID
+      - description: 组织名称
         in: path
-        name: id
+        name: org_name
         required: true
-        type: integer
+        type: string
       - description: 成员信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.AddMemberRequest'
+          $ref: '#/definitions/dto.AddOrganizationMemberRequest'
       produces:
       - application/json
       responses:
@@ -477,20 +480,20 @@ paths:
       security:
       - Bearer: []
       summary: 添加组织成员
-  /api/v1/organizations/{id}/members/{userid}:
+  /api/v1/organizations/{org_name}/members/{username}:
     delete:
       description: 从组织中移除成员（仅管理员可操作）
       parameters:
-      - description: 组织ID
+      - description: 组织名称
         in: path
-        name: id
+        name: org_name
         required: true
-        type: integer
-      - description: 用户ID
+        type: string
+      - description: 用户名
         in: path
-        name: userid
+        name: username
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -506,16 +509,16 @@ paths:
       - application/json
       description: 更新组织成员信息（仅管理员可操作）
       parameters:
-      - description: 组织ID
+      - description: 组织名称
         in: path
-        name: id
+        name: org_name
         required: true
-        type: integer
-      - description: 用户ID
+        type: string
+      - description: 用户名
         in: path
-        name: userid
+        name: username
         required: true
-        type: integer
+        type: string
       - description: 更新信息
         in: body
         name: request
@@ -532,38 +535,6 @@ paths:
       security:
       - Bearer: []
       summary: 更新组织成员
-  /api/v1/organizations/{id}/members/{userid}/role:
-    put:
-      consumes:
-      - application/json
-      description: 设置组织成员的角色（仅管理员可操作）
-      parameters:
-      - description: 组织ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: 用户ID
-        in: path
-        name: userid
-        required: true
-        type: integer
-      - description: 角色信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateMemberRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.Response'
-      security:
-      - Bearer: []
-      summary: 设置成员角色
   /api/v1/users:
     delete:
       description: 删除用户账号

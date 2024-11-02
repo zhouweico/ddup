@@ -36,7 +36,7 @@ func SetupRouter() *gin.Engine {
 	userHandler := handler.NewUserHandler(userService)
 	healthHandler := handler.NewHealthHandler()
 	socialHandler := handler.NewSocialHandler(socialService)
-	organizationHandler := handler.NewOrganizationHandler(organizationService)
+	organizationHandler := handler.NewOrganizationHandler(organizationService, userService)
 
 	// 健康检查路由（放在 API v1 路由组之外）
 	r.GET("/health", healthHandler.Check)
@@ -79,20 +79,19 @@ func SetupRouter() *gin.Engine {
 			// 组织基本操作
 			orgs.POST("", organizationHandler.CreateOrganization)
 			orgs.GET("", organizationHandler.GetUserOrganization)
-			orgs.PUT("/:id", organizationHandler.UpdateOrganization)
-			orgs.DELETE("/:id", organizationHandler.DeleteOrganization)
+			orgs.PUT("/:org_name", organizationHandler.UpdateOrganization)
+			orgs.DELETE("/:org_name", organizationHandler.DeleteOrganization)
 
 			// 组织成员管理
-			orgs.POST("/:id/join", organizationHandler.JoinOrganization)
-			orgs.GET("/:id/members", organizationHandler.GetOrganizationMembers)
+			orgs.POST("/:org_name/join", organizationHandler.JoinOrganization)
 
 			// 组织管理员操作
-			members := orgs.Group("/:id/members")
+			members := orgs.Group("/:org_name/members")
 			{
+				members.GET("", organizationHandler.GetOrganizationMembers)
 				members.POST("", organizationHandler.AddOrganizationMember)
-				members.PUT("/:userid", organizationHandler.UpdateOrganizationMember)
-				members.DELETE("/:userid", organizationHandler.RemoveOrganizationMember)
-				members.PUT("/:userid/role", organizationHandler.SetOrganizationMemberRole)
+				members.PUT("/:username", organizationHandler.UpdateOrganizationMember)
+				members.DELETE("/:username", organizationHandler.RemoveOrganizationMember)
 			}
 		}
 	}

@@ -21,6 +21,7 @@ type IUserService interface {
 	ChangePassword(ctx context.Context, id uint, req *dto.ChangePasswordRequest) error
 	ValidateToken(token string) (*TokenValidationResult, error)
 	Logout(ctx context.Context, token string) error
+	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
 }
 
 type UserService struct {
@@ -243,4 +244,8 @@ func (s *UserService) ValidateToken(token string) (*TokenValidationResult, error
 		Username: claims.Username,
 		Valid:    true,
 	}, nil
+}
+
+func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
+	return s.userRepo.GetByUsername(ctx, username)
 }

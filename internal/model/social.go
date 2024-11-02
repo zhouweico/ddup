@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 // Social 社交媒体账号
 type Social struct {
+	ID          uint   `gorm:"primarykey"`
 	UserID      uint   `gorm:"not null;index"`             // 用户ID
 	Platform    string `gorm:"type:varchar(50);not null"`  // 平台名称
 	Username    string `gorm:"type:varchar(100);not null"` // 平台用户名

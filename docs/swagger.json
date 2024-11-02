@@ -205,7 +205,7 @@
                 }
             }
         },
-        "/api/v1/organizations/{id}": {
+        "/api/v1/organizations/{org_name}": {
             "put": {
                 "security": [
                     {
@@ -222,9 +222,9 @@
                 "summary": "更新组织信息",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
@@ -260,9 +260,9 @@
                 "summary": "删除组织",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     }
@@ -277,7 +277,7 @@
                 }
             }
         },
-        "/api/v1/organizations/{id}/join": {
+        "/api/v1/organizations/{org_name}/join": {
             "post": {
                 "security": [
                     {
@@ -294,13 +294,11 @@
                 "summary": "加入组织",
                 "parameters": [
                     {
-                        "description": "组织ID",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.JoinOrganizationRequest"
-                        }
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -313,7 +311,7 @@
                 }
             }
         },
-        "/api/v1/organizations/{id}/members": {
+        "/api/v1/organizations/{org_name}/members": {
             "get": {
                 "security": [
                     {
@@ -327,9 +325,9 @@
                 "summary": "获取组织成员列表",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     }
@@ -374,9 +372,9 @@
                 "summary": "添加组织成员",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
@@ -386,7 +384,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AddMemberRequest"
+                            "$ref": "#/definitions/dto.AddOrganizationMemberRequest"
                         }
                     }
                 ],
@@ -400,7 +398,7 @@
                 }
             }
         },
-        "/api/v1/organizations/{id}/members/{userid}": {
+        "/api/v1/organizations/{org_name}/members/{username}": {
             "put": {
                 "security": [
                     {
@@ -417,16 +415,16 @@
                 "summary": "更新组织成员",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "userid",
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
                         "in": "path",
                         "required": true
                     },
@@ -462,68 +460,18 @@
                 "summary": "移除组织成员",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "userid",
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
                         "in": "path",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/organizations/{id}/members/{userid}/role": {
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "设置组织成员的角色（仅管理员可操作）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "设置成员角色",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "userid",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "角色信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateMemberRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -867,11 +815,11 @@
         }
     },
     "definitions": {
-        "dto.AddMemberRequest": {
+        "dto.AddOrganizationMemberRequest": {
             "type": "object",
             "required": [
                 "role",
-                "user_id"
+                "username"
             ],
             "properties": {
                 "role": {
@@ -881,8 +829,8 @@
                         "member"
                     ]
                 },
-                "user_id": {
-                    "type": "integer"
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -906,6 +854,7 @@
         "dto.CreateOrganizationRequest": {
             "type": "object",
             "required": [
+                "display_name",
                 "name"
             ],
             "properties": {
@@ -914,6 +863,11 @@
                 },
                 "description": {
                     "type": "string"
+                },
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
                 },
                 "email": {
                     "type": "string"
@@ -928,17 +882,6 @@
                 },
                 "website": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.JoinOrganizationRequest": {
-            "type": "object",
-            "required": [
-                "organization_id"
-            ],
-            "properties": {
-                "organization_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -983,7 +926,10 @@
                 "avatar": {
                     "type": "string"
                 },
-                "created_at": {
+                "email": {
+                    "type": "string"
+                },
+                "joined_at": {
                     "type": "string"
                 },
                 "nickname": {
@@ -991,9 +937,6 @@
                 },
                 "role": {
                     "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
@@ -1007,6 +950,9 @@
                     "type": "string"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "display_name": {
                     "type": "string"
                 },
                 "email": {
@@ -1072,6 +1018,11 @@
                 },
                 "description": {
                     "type": "string"
+                },
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
                 },
                 "email": {
                     "type": "string"

@@ -4,17 +4,17 @@ import (
 	"ddup-apis/internal/dto"
 	"ddup-apis/internal/service"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type OrganizationHandler struct {
-	service *service.OrganizationService
+	service     *service.OrganizationService
+	userService *service.UserService
 }
 
-func NewOrganizationHandler(service *service.OrganizationService) *OrganizationHandler {
-	return &OrganizationHandler{service: service}
+func NewOrganizationHandler(service *service.OrganizationService, userService *service.UserService) *OrganizationHandler {
+	return &OrganizationHandler{service: service, userService: userService}
 }
 
 // @Summary 创建组织
@@ -33,13 +33,13 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	}
 
 	userID := c.GetUint("userID")
-	org, err := h.service.CreateOrganization(c.Request.Context(), &req, userID)
+	err := h.service.CreateOrganization(c.Request.Context(), userID, &req)
 	if err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	SendSuccess(c, "创建组织成功", org)
+	SendSuccess(c, "创建组织成功", nil)
 }
 
 // @Summary 获取用户组织列表
@@ -64,16 +64,29 @@ func (h *OrganizationHandler) GetUserOrganization(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param id path int true "组织ID"
+// @Param org_name path string true "组织名称"
 // @Param request body dto.UpdateOrganizationRequest true "更新信息"
 // @Success 200 {object} Response
-// @Router /api/v1/organizations/{id} [put]
+// @Router /api/v1/organizations/{org_name} [put]
 func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	orgName := c.Param("org_name")
 	userID := c.GetUint("userID")
 
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
+
 	// 检查权限
-	role, err := h.service.CheckMemberRole(c.Request.Context(), uint(id), userID)
+	role, err := h.service.CheckMemberRole(c.Request.Context(), org.ID, userID)
 	if err != nil || role != "admin" {
 		SendError(c, http.StatusForbidden, "没有权限执行此操作")
 		return
@@ -85,7 +98,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateOrganization(c.Request.Context(), uint(id), &req); err != nil {
+	if err := h.service.UpdateOrganization(c.Request.Context(), org.ID, &req); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -97,21 +110,34 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 // @Description 删除组织（仅管理员可操作）
 // @Produce json
 // @Security Bearer
-// @Param id path int true "组织ID"
+// @Param org_name path string true "组织名称"
 // @Success 200 {object} Response
-// @Router /api/v1/organizations/{id} [delete]
+// @Router /api/v1/organizations/{org_name} [delete]
 func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	orgName := c.Param("org_name")
 	userID := c.GetUint("userID")
 
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
+
 	// 检查权限
-	role, err := h.service.CheckMemberRole(c.Request.Context(), uint(id), userID)
+	role, err := h.service.CheckMemberRole(c.Request.Context(), org.ID, userID)
 	if err != nil || role != "admin" {
 		SendError(c, http.StatusForbidden, "没有权限执行此操作")
 		return
 	}
 
-	if err := h.service.DeleteOrganization(c.Request.Context(), uint(id)); err != nil {
+	if err := h.service.DeleteOrganization(c.Request.Context(), org.ID); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -124,21 +150,27 @@ func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param request body dto.JoinOrganizationRequest true "组织ID"
+// @Param org_name path string true "组织名称"
 // @Success 200 {object} Response
-// @Router /api/v1/organizations/{id}/join [post]
+// @Router /api/v1/organizations/{org_name}/join [post]
 func (h *OrganizationHandler) JoinOrganization(c *gin.Context) {
-	var req dto.JoinOrganizationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		SendError(c, http.StatusBadRequest, "无效的请求参数")
+	orgName := c.Param("org_name")
+	username := c.GetString("username")
+
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	userID := c.GetUint("userID")
-	if err := h.service.AddMember(c.Request.Context(), req.OrganizationID, &dto.AddMemberRequest{
-		UserID: userID,
-		Role:   "member",
-	}); err != nil {
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
+
+	if err := h.service.AddMember(c.Request.Context(), org.ID, username, "member"); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -151,28 +183,41 @@ func (h *OrganizationHandler) JoinOrganization(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param id path int true "组织ID"
-// @Param request body dto.AddMemberRequest true "成员信息"
+// @Param org_name path string true "组织名称"
+// @Param request body dto.AddOrganizationMemberRequest true "成员信息"
 // @Success 200 {object} Response
-// @Router /api/v1/organizations/{id}/members [post]
+// @Router /api/v1/organizations/{org_name}/members [post]
 func (h *OrganizationHandler) AddOrganizationMember(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	orgName := c.Param("org_name")
 	userID := c.GetUint("userID")
 
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
+
 	// 检查权限
-	role, err := h.service.CheckMemberRole(c.Request.Context(), uint(id), userID)
+	role, err := h.service.CheckMemberRole(c.Request.Context(), org.ID, userID)
 	if err != nil || role != "admin" {
 		SendError(c, http.StatusForbidden, "没有权限执行此操作")
 		return
 	}
 
-	var req dto.AddMemberRequest
+	var req dto.AddOrganizationMemberRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		SendError(c, http.StatusBadRequest, "无效的请求参数")
 		return
 	}
 
-	if err := h.service.AddMember(c.Request.Context(), uint(id), &req); err != nil {
+	if err := h.service.AddMember(c.Request.Context(), org.ID, req.Username, req.Role); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -184,13 +229,26 @@ func (h *OrganizationHandler) AddOrganizationMember(c *gin.Context) {
 // @Description 获取组织的所有成员
 // @Produce json
 // @Security Bearer
-// @Param id path int true "组织ID"
+// @Param org_name path string true "组织名称"
 // @Success 200 {object} Response{data=[]dto.MemberResponse}
-// @Router /api/v1/organizations/{id}/members [get]
+// @Router /api/v1/organizations/{org_name}/members [get]
 func (h *OrganizationHandler) GetOrganizationMembers(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	orgName := c.Param("org_name")
 
-	members, err := h.service.GetMembers(c.Request.Context(), uint(id))
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
+
+	members, err := h.service.GetMembers(c.Request.Context(), org.ID)
 	if err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -204,18 +262,31 @@ func (h *OrganizationHandler) GetOrganizationMembers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param id path int true "组织ID"
-// @Param userid path int true "用户ID"
+// @Param org_name path string true "组织名称"
+// @Param username path string true "用户名"
 // @Param request body dto.UpdateMemberRequest true "更新信息"
 // @Success 200 {object} Response
-// @Router /api/v1/organizations/{id}/members/{userid} [put]
+// @Router /api/v1/organizations/{org_name}/members/{username} [put]
 func (h *OrganizationHandler) UpdateOrganizationMember(c *gin.Context) {
-	orgID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	orgName := c.Param("org_name")
+	username := c.Param("username")
 	userID := c.GetUint("userID")
-	targetUserID, _ := strconv.ParseUint(c.Param("userid"), 10, 64)
+
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
 
 	// 检查权限
-	role, err := h.service.CheckMemberRole(c.Request.Context(), uint(orgID), userID)
+	role, err := h.service.CheckMemberRole(c.Request.Context(), org.ID, userID)
 	if err != nil || role != "admin" {
 		SendError(c, http.StatusForbidden, "没有权限执行此操作")
 		return
@@ -227,7 +298,7 @@ func (h *OrganizationHandler) UpdateOrganizationMember(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateMember(c.Request.Context(), uint(orgID), uint(targetUserID), &req); err != nil {
+	if err := h.service.UpdateMember(c.Request.Context(), org.ID, username, &req); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -239,64 +310,39 @@ func (h *OrganizationHandler) UpdateOrganizationMember(c *gin.Context) {
 // @Description 从组织中移除成员（仅管理员可操作）
 // @Produce json
 // @Security Bearer
-// @Param id path int true "组织ID"
-// @Param userid path int true "用户ID"
+// @Param org_name path string true "组织名称"
+// @Param username path string true "用户名"
 // @Success 200 {object} Response
-// @Router /api/v1/organizations/{id}/members/{userid} [delete]
+// @Router /api/v1/organizations/{org_name}/members/{username} [delete]
 func (h *OrganizationHandler) RemoveOrganizationMember(c *gin.Context) {
-	orgID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	orgName := c.Param("org_name")
+	username := c.Param("username")
 	userID := c.GetUint("userID")
-	targetUserID, _ := strconv.ParseUint(c.Param("userid"), 10, 64)
+
+	// 验证组织名称格式
+	if err := h.service.ValidateOrgName(orgName); err != nil {
+		SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 获取组织信息
+	org, err := h.service.GetOrgByName(c.Request.Context(), orgName)
+	if err != nil {
+		SendError(c, http.StatusNotFound, "组织不存在")
+		return
+	}
 
 	// 检查权限
-	role, err := h.service.CheckMemberRole(c.Request.Context(), uint(orgID), userID)
+	role, err := h.service.CheckMemberRole(c.Request.Context(), org.ID, userID)
 	if err != nil || role != "admin" {
 		SendError(c, http.StatusForbidden, "没有权限执行此操作")
 		return
 	}
 
-	if err := h.service.RemoveMember(c.Request.Context(), uint(orgID), uint(targetUserID)); err != nil {
+	if err := h.service.RemoveMember(c.Request.Context(), org.ID, username); err != nil {
 		SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	SendSuccess(c, "移除成员成功", nil)
 }
-
-// @Summary 设置成员角色
-// @Description 设置组织成员的角色（仅管理员可操作）
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param id path int true "组织ID"
-// @Param userid path int true "用户ID"
-// @Param request body dto.UpdateMemberRequest true "角色信息"
-// @Success 200 {object} Response
-// @Router /api/v1/organizations/{id}/members/{userid}/role [put]
-func (h *OrganizationHandler) SetOrganizationMemberRole(c *gin.Context) {
-	orgID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	userID := c.GetUint("userID")
-	targetUserID, _ := strconv.ParseUint(c.Param("userid"), 10, 64)
-
-	// 检查权限
-	role, err := h.service.CheckMemberRole(c.Request.Context(), uint(orgID), userID)
-	if err != nil || role != "admin" {
-		SendError(c, http.StatusForbidden, "没有权限执行此操作")
-		return
-	}
-
-	var req dto.UpdateMemberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		SendError(c, http.StatusBadRequest, "无效的请求参数")
-		return
-	}
-
-	if err := h.service.UpdateMember(c.Request.Context(), uint(orgID), uint(targetUserID), &req); err != nil {
-		SendError(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	SendSuccess(c, "设置成员角色成功", nil)
-}
-
-// 其他处理方法继续...

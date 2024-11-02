@@ -2,7 +2,7 @@
 
 # API 配置
 API_URL="http://localhost:8080/api/v1"
-TEST_USER="testuser2"
+TEST_USER="testuser"
 TEST_PASSWORD="password123"
 
 # 测试结果统计
@@ -55,15 +55,25 @@ verify_response() {
         return 1
     fi
     
-    local status=$(echo "$response" | jq -r '.code')
-    local message=$(echo "$response" | jq -r '.message')
+    local status=$(echo "$response" | jq -r '.code // empty')
+    local message=$(echo "$response" | jq -r '.message // empty')
+    
+    if [ -z "$status" ]; then
+        log_error "响应中没有找到 code 字段"
+        return 1
+    fi
+    
+    if ! [[ "$status" =~ ^[0-9]+$ ]]; then
+        log_error "无效的状态码: $status"
+        return 1
+    fi
     
     if [ "$status" -eq "$expected_status" ] && [ "$message" = "$expected_message" ]; then
         log_success "测试通过"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         return 0
     else
-        log_error "测试失败"
+        log_error "测试失败： $message"
         return 1
     fi
 }

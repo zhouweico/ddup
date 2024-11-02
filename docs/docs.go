@@ -212,7 +212,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/organizations/{id}": {
+        "/api/v1/organizations/{org_name}": {
             "put": {
                 "security": [
                     {
@@ -229,9 +229,9 @@ const docTemplate = `{
                 "summary": "更新组织信息",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
@@ -267,9 +267,9 @@ const docTemplate = `{
                 "summary": "删除组织",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     }
@@ -284,7 +284,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/organizations/{id}/join": {
+        "/api/v1/organizations/{org_name}/join": {
             "post": {
                 "security": [
                     {
@@ -301,13 +301,11 @@ const docTemplate = `{
                 "summary": "加入组织",
                 "parameters": [
                     {
-                        "description": "组织ID",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.JoinOrganizationRequest"
-                        }
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -320,7 +318,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/organizations/{id}/members": {
+        "/api/v1/organizations/{org_name}/members": {
             "get": {
                 "security": [
                     {
@@ -334,9 +332,9 @@ const docTemplate = `{
                 "summary": "获取组织成员列表",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     }
@@ -381,9 +379,9 @@ const docTemplate = `{
                 "summary": "添加组织成员",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
@@ -393,7 +391,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AddMemberRequest"
+                            "$ref": "#/definitions/dto.AddOrganizationMemberRequest"
                         }
                     }
                 ],
@@ -407,7 +405,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/organizations/{id}/members/{userid}": {
+        "/api/v1/organizations/{org_name}/members/{username}": {
             "put": {
                 "security": [
                     {
@@ -424,16 +422,16 @@ const docTemplate = `{
                 "summary": "更新组织成员",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "userid",
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
                         "in": "path",
                         "required": true
                     },
@@ -469,68 +467,18 @@ const docTemplate = `{
                 "summary": "移除组织成员",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "组织名称",
+                        "name": "org_name",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "userid",
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
                         "in": "path",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/organizations/{id}/members/{userid}/role": {
-            "put": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "设置组织成员的角色（仅管理员可操作）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "设置成员角色",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "组织ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "userid",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "角色信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateMemberRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -874,11 +822,11 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.AddMemberRequest": {
+        "dto.AddOrganizationMemberRequest": {
             "type": "object",
             "required": [
                 "role",
-                "user_id"
+                "username"
             ],
             "properties": {
                 "role": {
@@ -888,8 +836,8 @@ const docTemplate = `{
                         "member"
                     ]
                 },
-                "user_id": {
-                    "type": "integer"
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -913,6 +861,7 @@ const docTemplate = `{
         "dto.CreateOrganizationRequest": {
             "type": "object",
             "required": [
+                "display_name",
                 "name"
             ],
             "properties": {
@@ -921,6 +870,11 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
                 },
                 "email": {
                     "type": "string"
@@ -935,17 +889,6 @@ const docTemplate = `{
                 },
                 "website": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.JoinOrganizationRequest": {
-            "type": "object",
-            "required": [
-                "organization_id"
-            ],
-            "properties": {
-                "organization_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -990,7 +933,10 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
-                "created_at": {
+                "email": {
+                    "type": "string"
+                },
+                "joined_at": {
                     "type": "string"
                 },
                 "nickname": {
@@ -998,9 +944,6 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
@@ -1014,6 +957,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "display_name": {
                     "type": "string"
                 },
                 "email": {
@@ -1079,6 +1025,11 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
                 },
                 "email": {
                     "type": "string"
