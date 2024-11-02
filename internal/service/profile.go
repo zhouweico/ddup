@@ -33,7 +33,7 @@ func (s *ProfileService) Create(ctx context.Context, userID uint, req *dto.Creat
 		Location:     req.Location,
 		URL:          req.URL,
 		Description:  req.Description,
-		Metadata:     model.JSON(req.Metadata),
+		Metadata:     json.RawMessage(req.Metadata),
 		Visibility:   req.Visibility,
 	}
 	return s.repo.Create(ctx, profile)
