@@ -55,7 +55,6 @@ func InitDB(cfg *config.Config) error {
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Session{},
-		&model.Social{},
 		&model.Profile{},
 		&model.Organization{},
 		&model.OrganizationMember{},

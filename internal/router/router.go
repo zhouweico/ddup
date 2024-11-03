@@ -30,14 +30,12 @@ func SetupRouter() *gin.Engine {
 	// 初始化 services
 	userService := service.NewUserService(db.DB)
 	profileService := service.NewProfileService(db.DB)
-	socialService := service.NewSocialService(db.DB)
 	organizationService := service.NewOrganizationService(db.DB)
 
 	// 初始化 handlers
 	userHandler := handler.NewUserHandler(userService)
 	profileHandler := handler.NewProfileHandler(profileService)
 	healthHandler := handler.NewHealthHandler()
-	socialHandler := handler.NewSocialHandler(socialService)
 	organizationHandler := handler.NewOrganizationHandler(organizationService, userService)
 
 	// 健康检查路由（放在 API v1 路由组之外）
@@ -63,15 +61,6 @@ func SetupRouter() *gin.Engine {
 			users.PUT("", userHandler.UpdateUser)              // 更新个人信息
 			users.DELETE("", userHandler.DeleteUser)           // 注销账号
 			users.PUT("/password", userHandler.ChangePassword) // 修改密码
-
-			// 用户社交媒体
-			socials := users.Group("/socials")
-			{
-				socials.POST("", socialHandler.CreateSocial)
-				socials.GET("", socialHandler.GetUserSocial)
-				socials.PUT("/:id", socialHandler.UpdateSocial)
-				socials.DELETE("/:id", socialHandler.DeleteSocial)
-			}
 		}
 
 		profiles := v1.Group("/profiles")

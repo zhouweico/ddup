@@ -45,7 +45,6 @@ main() {
     # 获取 token 后运行其他测试
     if [ -n "$TOKEN" ]; then
         run_user_tests
-        run_social_tests
         run_profile_tests
         run_profile_metadata_tests
         run_organization_tests

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"ddup-apis/internal/config"
+	"ddup-apis/internal/db"
 	"ddup-apis/internal/dto"
 	"ddup-apis/internal/errors"
 	"ddup-apis/internal/model"
@@ -9,6 +11,7 @@ import (
 	"ddup-apis/internal/utils"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +25,7 @@ type IUserService interface {
 	ValidateToken(token string) (*TokenValidationResult, error)
 	Logout(ctx context.Context, token string) error
 	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
+	GenerateToken(ctx context.Context, userID uint, username string) (string, time.Time, int64, time.Time, error)
 }
 
 type UserService struct {
@@ -51,6 +55,13 @@ type ISessionRepository interface {
 	CreateSession(ctx context.Context, session *model.Session) error
 	GetSessionByToken(ctx context.Context, token string) (*model.Session, error)
 	InvalidateSession(ctx context.Context, token string) error
+	InvalidateUserSessions(ctx context.Context, userID uint) error
+}
+
+type Claims struct {
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
+	jwt.RegisteredClaims
 }
 
 // 2. 将 TokenValidationResult 移到更合适的位置（比如 dto 包）
@@ -99,20 +110,9 @@ func (s *UserService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	}
 
 	// 生成token
-	token, createdAt, expiresIn, expiredAt, err := utils.GenerateToken(user.ID, user.Username)
+	token, createdAt, expiresIn, expiredAt, err := s.GenerateToken(ctx, user.ID, user.Username)
 	if err != nil {
 		return nil, errors.Wrap(err, "生成token失败")
-	}
-
-	// 创建会话
-	session := &model.Session{
-		UserID:    user.ID,
-		Token:     token,
-		IsValid:   true,
-		ExpiredAt: expiredAt,
-	}
-	if err := s.sessionRepo.CreateSession(ctx, session); err != nil {
-		return nil, errors.Wrap(err, "创建会话失败")
 	}
 
 	// 更新最后登录时间
@@ -246,4 +246,48 @@ func (s *UserService) ValidateToken(token string) (*TokenValidationResult, error
 
 func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	return s.userRepo.GetByUsername(ctx, username)
+}
+
+// GenerateToken 生成 JWT Token 并保存到数据库
+func (s *UserService) GenerateToken(ctx context.Context, userID uint, username string) (string, time.Time, int64, time.Time, error) {
+	cfg := config.GetConfig()
+	now := time.Now()
+	expiresIn := int64(cfg.JWT.ExpiresIn.Seconds())
+	expiredAt := now.Add(cfg.JWT.ExpiresIn)
+	createdAt := now
+
+	// 生成新 Token
+	claims := &Claims{
+		UserID:   userID,
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiredAt),
+			IssuedAt:  jwt.NewNumericDate(createdAt),
+		},
+	}
+
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := jwtToken.SignedString([]byte(cfg.JWT.Secret))
+	if err != nil {
+		return "", time.Time{}, 0, time.Time{}, err
+	}
+
+	// 将用户现有的 token 标记为无效并软删除
+	if err := s.sessionRepo.InvalidateUserSessions(ctx, userID); err != nil {
+		return "", time.Time{}, 0, time.Time{}, err
+	}
+
+	// 保存新 Token 到数据库
+	newSession := model.Session{
+		UserID:    userID,
+		Token:     token,
+		IsValid:   true,
+		ExpiredAt: expiredAt,
+	}
+
+	if err = db.DB.Create(&newSession).Error; err != nil {
+		return "", time.Time{}, 0, time.Time{}, err
+	}
+
+	return token, createdAt, expiresIn, expiredAt, nil
 }
