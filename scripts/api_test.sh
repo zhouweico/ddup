@@ -47,6 +47,7 @@ main() {
         run_user_tests
         run_social_tests
         run_profile_tests
+        run_profile_metadata_tests
         run_organization_tests
         # 最后运行登出测试
         run_logout_test
