@@ -85,3 +85,17 @@ type Attachment struct {
 	Size     int64  `json:"size"`      // 文件大小
 	Name     string `json:"name"`      // 文件名
 }
+
+// Profile 添加钩子方法
+func (p *Profile) BeforeCreate(tx *gorm.DB) error {
+	if p.Visibility == "" {
+		p.Visibility = "public"
+	}
+	if p.DisplayOrder == 0 {
+		var maxOrder int
+		tx.Model(&Profile{}).Where("user_id = ?", p.UserID).
+			Select("COALESCE(MAX(display_order), 0)").Scan(&maxOrder)
+		p.DisplayOrder = maxOrder + 1
+	}
+	return nil
+}
