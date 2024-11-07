@@ -1,0 +1,49 @@
+# 服务器配置
+server:
+  port: 8080            # 服务器端口
+  mode: development     # 运行模式：development/production
+
+# 数据库配置
+database:
+  driver: postgres      # 数据库类型：postgres, mysql, sqlite
+  host: localhost      # 数据库主机地址
+  port: 5432          # 数据库端口
+  user: ddup          # 数据库用户名
+  password: ""        # 数据库密码
+  name: ddup          # 数据库名称/SQLite文件路径
+  
+  # 数据库连接池配置
+  pool:
+    max_open: 50      # 最大打开连接数
+    max_idle: 10      # 最大空闲连接数
+    lifetime: 1h      # 连接最大生命周期
+    idle_time: 15m    # 空闲连接超时时间
+  
+  # 数据库重试配置
+  retry:
+    attempts: 3       # 连接重试次数
+    interval: 5s      # 重试间隔时间
+
+# JWT配置
+jwt:
+  secret: your-secret-key  # JWT密钥
+  expires_in: 24h       # JWT过期时间
+
+# 健康检查配置
+health_check:
+  interval: 5m        # 健康检查间隔时间
+
+# 日志配置
+log:
+  level: 0            # 日志级别：-1=debug, 0=info, 1=warn, 2=error, 3=dpanic, 4=panic, 5=fatal
+  filename: app.log   # 日志文件名
+  max_size: 100      # 单个日志文件最大尺寸(MB)
+  max_backups: 5     # 最大日志备份数量
+  max_age: 30        # 日志文件保留天数
+  compress: true     # 是否压缩旧日志文件
+
+# Swagger文档配置
+swagger:
+  host: localhost:8080  # Swagger主机地址
+  schemes:             # 支持的协议
+    - https

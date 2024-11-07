@@ -11,41 +11,51 @@ import (
 
 type Config struct {
 	Server struct {
-		Port string
-		Mode string
-	}
+		Port string `mapstructure:"port" yaml:"port" default:"8080"`
+		Mode string `mapstructure:"mode" yaml:"mode" default:"development"`
+	} `mapstructure:"server" yaml:"server"`
+
 	Database struct {
-		Host         string
-		Port         string
-		Name         string
-		User         string
-		Password     string
-		MaxOpenConns int           // 最大打开连接数
-		MaxIdleConns int           // 最大空闲连接数
-		MaxLifetime  time.Duration // 连接最大生命周期
-		MaxIdleTime  time.Duration // 空闲连接最大生命周期
-		RetryTimes   int           // 重试次数
-		RetryDelay   time.Duration // 重试延迟
-	}
+		Driver   string `mapstructure:"driver" yaml:"driver" default:"postgres"`
+		Host     string `mapstructure:"host" yaml:"host" default:"localhost"`
+		Port     string `mapstructure:"port" yaml:"port" default:"5432"`
+		User     string `mapstructure:"user" yaml:"user" default:"ddup"`
+		Password string `mapstructure:"password" yaml:"password"`
+		Name     string `mapstructure:"name" yaml:"name" default:"ddup"`
+		Pool     struct {
+			MaxOpen  int           `mapstructure:"max_open" yaml:"max_open" default:"50"`
+			MaxIdle  int           `mapstructure:"max_idle" yaml:"max_idle" default:"10"`
+			Lifetime time.Duration `mapstructure:"lifetime" yaml:"lifetime" default:"1h"`
+			IdleTime time.Duration `mapstructure:"idle_time" yaml:"idle_time" default:"15m"`
+		} `mapstructure:"pool" yaml:"pool"`
+		Retry struct {
+			Attempts int           `mapstructure:"attempts" yaml:"attempts" default:"3"`
+			Interval time.Duration `mapstructure:"interval" yaml:"interval" default:"5s"`
+		} `mapstructure:"retry" yaml:"retry"`
+	} `mapstructure:"database" yaml:"database"`
+
 	JWT struct {
-		Secret    string
-		ExpiresIn time.Duration
-	}
+		Secret    string        `mapstructure:"secret" yaml:"secret"`
+		ExpiresIn time.Duration `mapstructure:"expires_in" yaml:"expires_in" default:"24h"`
+	} `mapstructure:"jwt" yaml:"jwt"`
+
 	HealthCheck struct {
-		Interval time.Duration // 健康检查间隔时间
-	}
+		Interval time.Duration `mapstructure:"interval" yaml:"interval" default:"5m"`
+	} `mapstructure:"health_check" yaml:"health_check"`
+
 	Log struct {
-		Level      zapcore.Level `mapstructure:"level"`
-		Filename   string        `mapstructure:"filename"`
-		MaxSize    int           `mapstructure:"max_size"`
-		MaxBackups int           `mapstructure:"max_backups"`
-		MaxAge     int           `mapstructure:"max_age"`
-		Compress   bool          `mapstructure:"compress"`
-	}
+		Level      zapcore.Level
+		Filename   string
+		MaxSize    int
+		MaxBackups int
+		MaxAge     int
+		Compress   bool
+	} `mapstructure:"log" yaml:"log"`
+
 	Swagger struct {
-		Host    string   `mapstructure:"host"`
-		Schemes []string `mapstructure:"schemes"`
-	}
+		Host    string   `mapstructure:"host" yaml:"host" default:"localhost:8080"`
+		Schemes []string `mapstructure:"schemes" yaml:"schemes" default:"[\"https\"]"`
+	} `mapstructure:"swagger" yaml:"swagger"`
 }
 
 var globalConfig Config
@@ -76,25 +86,24 @@ func LoadConfig() (*Config, error) {
 	config.Server.Mode = viper.GetString("SERVER_MODE")
 
 	// 数据库配置
+	config.Database.Driver = viper.GetString("DB_DRIVER")
 	config.Database.Host = viper.GetString("DB_HOST")
 	config.Database.Port = viper.GetString("DB_PORT")
-	config.Database.Name = viper.GetString("DB_NAME")
 	config.Database.User = viper.GetString("DB_USER")
 	config.Database.Password = viper.GetString("DB_PASSWORD")
+	config.Database.Name = viper.GetString("DB_NAME")
 
 	// JWT配置
 	config.JWT.Secret = viper.GetString("JWT_SECRET")
-
-	// 将 JWT_EXPIRES_IN 从秒转换为 time.Duration
-	config.JWT.ExpiresIn = time.Duration(viper.GetInt("JWT_EXPIRES_IN")) * time.Second
+	config.JWT.ExpiresIn = viper.GetDuration("JWT_EXPIRES_IN")
 
 	// 数据库连接池配置
-	config.Database.MaxOpenConns = viper.GetInt("DB_MAX_OPEN_CONNS")
-	config.Database.MaxIdleConns = viper.GetInt("DB_MAX_IDLE_CONNS")
-	config.Database.MaxLifetime = viper.GetDuration("DB_MAX_LIFETIME")
-	config.Database.MaxIdleTime = viper.GetDuration("DB_MAX_IDLE_TIME")
-	config.Database.RetryTimes = viper.GetInt("DB_RETRY_TIMES")
-	config.Database.RetryDelay = viper.GetDuration("DB_RETRY_DELAY")
+	config.Database.Pool.MaxOpen = viper.GetInt("DB_POOL_MAX_OPEN")
+	config.Database.Pool.MaxIdle = viper.GetInt("DB_POOL_MAX_IDLE")
+	config.Database.Pool.Lifetime = viper.GetDuration("DB_POOL_LIFETIME")
+	config.Database.Pool.IdleTime = viper.GetDuration("DB_POOL_IDLE_TIME")
+	config.Database.Retry.Attempts = viper.GetInt("DB_RETRY_ATTEMPTS")
+	config.Database.Retry.Interval = viper.GetDuration("DB_RETRY_INTERVAL")
 
 	// 健康检查配置
 	config.HealthCheck.Interval = viper.GetDuration("HEALTH_CHECK_INTERVAL")

@@ -5,35 +5,35 @@ import (
 	"time"
 
 	"ddup-apis/internal/config"
+	"ddup-apis/internal/db/driver"
 	"ddup-apis/internal/model"
 
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func InitDB(cfg *config.Config) error {
+	factory := driver.NewFactory()
+	factory.Register(&driver.PostgresDriver{})
+	factory.Register(&driver.MySQLDriver{})
+	factory.Register(&driver.SQLiteDriver{})
+
+	driver, err := factory.Get(cfg.Database.Driver)
+	if err != nil {
+		return err
+	}
+
 	var db *gorm.DB
-	var err error
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		cfg.Database.Host,
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.Name,
-		cfg.Database.Port,
-	)
-
 	// 实现重试机制
-	for i := 0; i <= cfg.Database.RetryTimes; i++ {
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	for i := 0; i <= cfg.Database.Retry.Attempts; i++ {
+		db, err = driver.Open(cfg)
 		if err == nil {
 			break
 		}
 
-		if i < cfg.Database.RetryTimes {
-			time.Sleep(cfg.Database.RetryDelay)
+		if i < cfg.Database.Retry.Attempts {
+			time.Sleep(cfg.Database.Retry.Interval)
 			continue
 		}
 		return fmt.Errorf("数据库连接失败，已重试 %d 次: %w", i, err)
@@ -46,10 +46,10 @@ func InitDB(cfg *config.Config) error {
 	}
 
 	// 设置连接池参数
-	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns)
-	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
-	sqlDB.SetConnMaxLifetime(cfg.Database.MaxLifetime)
-	sqlDB.SetConnMaxIdleTime(cfg.Database.MaxIdleTime)
+	sqlDB.SetMaxOpenConns(cfg.Database.Pool.MaxOpen)
+	sqlDB.SetMaxIdleConns(cfg.Database.Pool.MaxIdle)
+	sqlDB.SetConnMaxLifetime(cfg.Database.Pool.Lifetime)
+	sqlDB.SetConnMaxIdleTime(cfg.Database.Pool.IdleTime)
 
 	// 自动迁移表结构
 	if err := db.AutoMigrate(

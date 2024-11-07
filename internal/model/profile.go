@@ -40,7 +40,7 @@ type Profile struct {
 	Location     string          `json:"location" gorm:"type:varchar(100)"`
 	URL          string          `json:"url" gorm:"type:varchar(255)"`
 	Description  string          `json:"description" gorm:"type:text"`
-	Metadata     json.RawMessage `json:"metadata" gorm:"type:jsonb"`
+	Metadata     json.RawMessage `json:"metadata" gorm:"type:json"`
 	DisplayOrder int             `json:"display_order" gorm:"default:0"`
 	Visibility   string          `json:"visibility" gorm:"type:varchar(10);default:public;check:visibility in ('public','private')"`
 	gorm.Model
