@@ -1276,6 +1276,9 @@
         },
         "dto.UpdateUserRequest": {
             "type": "object",
+            "required": [
+                "nickname"
+            ],
             "properties": {
                 "avatar": {
                     "type": "string"
@@ -1289,6 +1292,13 @@
                 "gender": {
                     "type": "string"
                 },
+                "language": {
+                    "type": "string",
+                    "enum": [
+                        "zh-CN",
+                        "en-US"
+                    ]
+                },
                 "location": {
                     "type": "string"
                 },
@@ -1296,7 +1306,9 @@
                     "type": "string"
                 },
                 "nickname": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 2
                 }
             }
         },
@@ -1316,6 +1328,9 @@
                     "type": "string"
                 },
                 "gender": {
+                    "type": "string"
+                },
+                "language": {
                     "type": "string"
                 },
                 "lastLogin": {

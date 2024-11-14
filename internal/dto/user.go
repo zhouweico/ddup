@@ -14,13 +14,14 @@ type LoginRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Nickname string `json:"nickname,omitempty"`
+	Nickname string `json:"nickname" binding:"required,min=2,max=20"`
 	Email    string `json:"email,omitempty"`
 	Mobile   string `json:"mobile,omitempty"`
 	Location string `json:"location,omitempty"`
 	Bio      string `json:"bio,omitempty"`
 	Gender   string `json:"gender,omitempty"`
-	Avatar   string `json:"avatar,omitempty"`
+	Avatar   string `json:"avatar"`
+	Language string `json:"language" binding:"omitempty,oneof=zh-CN en-US"`
 }
 
 type ChangePasswordRequest struct {
@@ -40,6 +41,7 @@ type UserResponse struct {
 	Birthday  *time.Time `json:"birthday"`
 	Avatar    string     `json:"avatar"`
 	LastLogin *time.Time `json:"lastLogin"`
+	Language  string     `json:"language"`
 }
 
 type LoginResponse struct {

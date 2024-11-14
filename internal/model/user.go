@@ -8,16 +8,17 @@ import (
 
 type User struct {
 	ID            uint       `gorm:"primarykey"`
-	Username      string     `gorm:"type:varchar(32);uniqueIndex;not null" json:"username"`
-	Password      string     `gorm:"size:100;not null" json:"-"`
+	Username      string     `gorm:"type:varchar(50);uniqueIndex;not null" json:"username"`
+	Password      string     `gorm:"type:varchar(100);not null" json:"-"`
+	Nickname      string     `gorm:"type:varchar(50);not null" json:"nickname"`
+	Gender        string     `gorm:"size:10;default:'unknown'" json:"gender"`
+	Birthday      *time.Time `json:"birthday"`
+	Avatar        string     `gorm:"type:varchar(255)" json:"avatar"`
 	Email         string     `gorm:"size:100;null" json:"email"`
 	Mobile        string     `gorm:"size:20;null" json:"mobile"`
 	Location      string     `gorm:"size:100;null" json:"location"`
-	Nickname      string     `gorm:"size:50" json:"nickname"`
+	Language      string     `gorm:"type:varchar(10);default:zh-CN" json:"language"`
 	Bio           string     `gorm:"size:500" json:"bio"`
-	Gender        string     `gorm:"size:10;default:'unknown'" json:"gender"`
-	Birthday      *time.Time `json:"birthday"`
-	Avatar        string     `gorm:"size:255" json:"avatar"`
 	Status        int        `gorm:"default:1;not null" json:"status"`
 	LastLogin     *time.Time `json:"last_login"`
 	LoginAttempts int        `gorm:"default:0" json:"-"`

@@ -1283,6 +1283,9 @@ const docTemplate = `{
         },
         "dto.UpdateUserRequest": {
             "type": "object",
+            "required": [
+                "nickname"
+            ],
             "properties": {
                 "avatar": {
                     "type": "string"
@@ -1296,6 +1299,13 @@ const docTemplate = `{
                 "gender": {
                     "type": "string"
                 },
+                "language": {
+                    "type": "string",
+                    "enum": [
+                        "zh-CN",
+                        "en-US"
+                    ]
+                },
                 "location": {
                     "type": "string"
                 },
@@ -1303,7 +1313,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nickname": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 2
                 }
             }
         },
@@ -1323,6 +1335,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gender": {
+                    "type": "string"
+                },
+                "language": {
                     "type": "string"
                 },
                 "lastLogin": {

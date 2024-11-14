@@ -13,7 +13,7 @@ run_user_tests() {
     test_api "更新用户信息" \
         "PUT" \
         "/users" \
-        "{\"nickname\":\"测试用户\",\"bio\":\"这是一个测试账号\"}" \
+        "{\"nickname\":\"测试用户\",\"bio\":\"这是一个测试账号\",\"language\":\"en-US\"}" \
         200 \
         "更新用户信息成功"
     

@@ -184,6 +184,9 @@ func (s *UserService) UpdateUser(ctx context.Context, id uint, req *dto.UpdateUs
 	if req.Avatar != "" {
 		updates["avatar"] = req.Avatar
 	}
+	if req.Language != "" {
+		updates["language"] = req.Language
+	}
 
 	return s.userRepo.Update(ctx, id, updates)
 }

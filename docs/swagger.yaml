@@ -263,12 +263,21 @@ definitions:
         type: string
       gender:
         type: string
+      language:
+        enum:
+        - zh-CN
+        - en-US
+        type: string
       location:
         type: string
       mobile:
         type: string
       nickname:
+        maxLength: 20
+        minLength: 2
         type: string
+    required:
+    - nickname
     type: object
   dto.UserResponse:
     properties:
@@ -281,6 +290,8 @@ definitions:
       email:
         type: string
       gender:
+        type: string
+      language:
         type: string
       lastLogin:
         type: string
